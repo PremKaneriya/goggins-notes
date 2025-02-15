@@ -28,11 +28,11 @@ const LoginPage = () => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.emailOrPhone.includes("@") ? formData.emailOrPhone : null,
-          phoneNumber: formData.emailOrPhone.match(/^\d{10}$/) ? formData.emailOrPhone : null,
-          password: formData.password,
-        }),
+        // body: JSON.stringify({
+        //   email: formData.emailOrPhone.includes("@") ? formData.emailOrPhone : null,
+        //   phoneNumber: formData.emailOrPhone.match(/^\d{10}$/) ? formData.emailOrPhone : null,
+        //   password: formData.password,
+        // }),
       });
 
       const data = await res.json();
