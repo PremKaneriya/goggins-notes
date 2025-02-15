@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import connectDB from "@/dbConnect/dbConnect";
 import Note from "../../../../../models/Notes.Model";
-import { getDataFromToken } from "@/utils/GetDataFromToken";
+import { getDataFromToken } from "../../../../utils/GetDataFromToken";
 
 connectDB();
 

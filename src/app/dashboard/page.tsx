@@ -20,7 +20,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchNotes = async () => {
             try {
-                const res = await fetch("/api/notes", {
+                const res = await fetch("/api/auth/notes", {
                     credentials: "include", // ✅ Send cookies
                 });
     
@@ -46,9 +46,9 @@ const Dashboard = () => {
         }
     
         try {
-            fetch('/api/notes').then(res => res.json()).then(console.log).catch(console.error);
+            fetch('/api/auth/notes').then(res => res.json()).then(console.log).catch(console.error);
 
-            const res = await fetch("/api/notes", {
+            const res = await fetch("/api/auth/notes", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -74,7 +74,7 @@ const Dashboard = () => {
     // Delete Note
     const handleDeleteNote = async (id: string) => {
         try {
-            const res = await fetch("/api/notes", {
+            const res = await fetch("/api/auth/notes", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ noteId: id }),
