@@ -4,16 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// Connect to the database once
 connectDB();
 
 export async function POST(request: NextRequest) {
   try {
-    
-    connectDB();
+    // Validate environment variables
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT Secret is not defined in environment variables");
+    }
 
+    // Parse request body
     const reqBody = await request.json();
     const { email, phoneNumber, password } = reqBody;
 
+    // Validate input
     if (!password || (!email && !phoneNumber)) {
       return NextResponse.json(
         { error: "Email/Phone and password are required" },
@@ -22,22 +27,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email or phone
-    const user = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
+    console.time("Database Query");
+    const user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
+    console.timeEnd("Database Query");
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 400 });
     }
 
     // Compare passwords
+    console.time("Password Comparison");
     const isPasswordCorrect = await bcryptjs.compare(password, user.password);
+    console.timeEnd("Password Comparison");
+
     if (!isPasswordCorrect) {
       return NextResponse.json({ error: "Incorrect password" }, { status: 400 });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT Secret is not defined in environment variables");
     }
 
     // Generate token
@@ -47,20 +51,23 @@ export async function POST(request: NextRequest) {
       { expiresIn: "1h" }
     );
 
+    // Set cookie and return response
     const response = NextResponse.json(
       { message: "User logged in successfully", info: user },
       { status: 200 }
     );
-
     response.headers.set(
       "Set-Cookie",
       `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax; ${
         process.env.NODE_ENV === "production" ? "Secure;" : ""
       }`
     );
-
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error in POST /api/login:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 }
+    );
   }
 }
