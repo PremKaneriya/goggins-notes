@@ -8,6 +8,9 @@ connectDB();
 
 export async function POST(request: NextRequest) {
   try {
+    
+    connectDB();
+
     const reqBody = await request.json();
     const { email, phoneNumber, password } = reqBody;
 
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Generate token
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, phoneNumber: user.phoneNumber },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );

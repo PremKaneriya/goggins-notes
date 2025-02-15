@@ -7,6 +7,9 @@ connectDB();
 
 export async function POST(request: NextRequest) {
   try {
+
+    connectDB();
+
     const reqBody = await request.json();
     const { phoneNumber, email, password } = reqBody;
 
@@ -35,9 +38,9 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const newUser = new User({
-      phoneNumber,
       email,
       password: hashedPassword,
+      phoneNumber,
     });
 
     await newUser.save();
