@@ -8,7 +8,7 @@ const LoginPage = () => {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    emailOrPhone: "",
+    email: "",
     password: "",
   });
 
@@ -28,11 +28,10 @@ const LoginPage = () => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // body: JSON.stringify({
-        //   email: formData.emailOrPhone.includes("@") ? formData.emailOrPhone : null,
-        //   phoneNumber: formData.emailOrPhone.match(/^\d{10}$/) ? formData.emailOrPhone : null,
-        //   password: formData.password,
-        // }),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await res.json();
@@ -62,8 +61,8 @@ const LoginPage = () => {
             <label className="block text-gray-600">Email or Phone Number</label>
             <input
               type="text"
-              name="emailOrPhone"
-              value={formData.emailOrPhone}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-300"

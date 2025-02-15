@@ -16,19 +16,19 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const reqBody = await request.json();
-    const { email, phoneNumber, password } = reqBody;
+    const { email, password } = reqBody;
 
     // Validate input
-    if (!password || (!email && !phoneNumber)) {
+    if (!email || !password ) {
       return NextResponse.json(
-        { error: "Email/Phone and password are required" },
+        { error: "email and password are required" },
         { status: 400 }
       );
     }
 
     // Find user by email or phone
     console.time("Database Query");
-    const user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
+    const user = await User.findOne({ $or: [{ email }] });
     console.timeEnd("Database Query");
 
     if (!user) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Generate token
     const token = jwt.sign(
-      { id: user._id, email: user.email, phoneNumber: user.phoneNumber },
+      { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
