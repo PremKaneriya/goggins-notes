@@ -3,6 +3,7 @@ import User from "../../../../../models/User.Model";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
 // Connect to the database once
 connectDB();
@@ -56,12 +57,13 @@ export async function POST(request: NextRequest) {
       { message: "User logged in successfully", info: user },
       { status: 200 }
     );
+    
+    const isProduction = process.env.NODE_ENV === "production";
+    
     response.headers.set(
       "Set-Cookie",
-      `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax; ${
-        process.env.NODE_ENV === "production" ? "Secure;" : ""
-      }`
-    );
+      `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax; ${isProduction ? "Secure;" : ""}`
+    );    
     return response;
   } catch (error: any) {
     console.error("Error in POST /api/login:", error);
