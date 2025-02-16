@@ -7,46 +7,32 @@ connectDB();
 
 export async function POST(request: NextRequest) {
   try {
-
-    connectDB();
-
     const reqBody = await request.json();
-    const { phoneNumber, email, password } = reqBody;
 
-    if (!phoneNumber || !email || !password) {
+    const { email, password, phoneNumber } = reqBody;
+
+    const user = await User.findOne({ email });
+
+    if (user) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "User already exists" },
         { status: 400 }
       );
     }
 
-    // Check if user already exists by phoneNumber or email
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists with this email or phone number" },
-        { status: 400 }
-      );
-    }
-
-    // Hash the password
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
-    // Create user
     const newUser = new User({
       email,
       password: hashedPassword,
       phoneNumber,
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
 
     return NextResponse.json(
-      { message: "User created successfully" },
+      { message: "User created successfully", info: savedUser },
       { status: 201 }
     );
   } catch (error: any) {
