@@ -1,7 +1,7 @@
 import mongoose, { model, models } from "mongoose";
 
-export type MyUser = {
-  _id?: mongoose.Types.ObjectId;
+export interface MyUser {
+  _id: mongoose.Types.ObjectId;
   phoneNumber: number;
   email: string;
   password: string;
@@ -9,7 +9,7 @@ export type MyUser = {
   updatedAt?: Date;
 }
 
-const userSchema = new mongoose.Schema<MyUser>({
+const userSchema = new mongoose.Schema({
   phoneNumber: {
       type: Number,
       required: true,
