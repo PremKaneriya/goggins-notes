@@ -53,6 +53,7 @@ export default function Login() {
       router.push("/dashboard");
     } catch (error: any) {
       setError(error.message);
+      console.log(error);
       toast.error(error.message);
     } finally {
       setLoading(false);
