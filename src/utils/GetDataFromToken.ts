@@ -1,21 +1,22 @@
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const getDataFromToken = (request: NextRequest) => {
   try {
-    // Ensure the token is retrieved correctly from cookies
-    const token = request.cookies.get("token")?.value || "";
-    
-    // Check if the token is not empty
-    if (!token) {
-      throw new Error("Please Login or Signup");
-    }
+    const token = request.cookies.get("token")?.value;
+    if (!token) throw new Error("Please login or sign up");
 
     // Verify and decode the token
-    const decodedToken: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
 
-    return decodedToken.id;
+    // Ensure the token is of type JwtPayload
+    if (typeof decodedToken === "string") {
+      throw new Error("Invalid token format");
+    }
+
+    return (decodedToken as JwtPayload).id;
   } catch (error: any) {
-    throw new Error(error.message);
+    console.error("JWT Error:", error.message);
+    return null; // Return null to handle errors gracefully
   }
 };
