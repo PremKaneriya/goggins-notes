@@ -5,6 +5,7 @@ export type MyNote = {
     userId: Types.ObjectId;
     title: string;
     content: string;
+    is_deleted: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,6 +24,10 @@ const noteSchema = new mongoose.Schema<MyNote>({
         type: String,
         required: true,
     },
+    is_deleted: {
+        type: Boolean,
+        default: false,
+    }
 }, {
     timestamps: true,
 });
