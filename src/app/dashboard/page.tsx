@@ -109,171 +109,75 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-            {/* Mobile Header */}
-            <header className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-lg border-b border-gray-800">
-                <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        My Notes
-                    </h1>
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-blue-500 p-3 rounded-full hover:bg-blue-600 transition-colors md:hidden"
-                    >
-                        <Plus size={20} className="text-white" />
-                    </button>
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="hidden md:flex items-center gap-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white transition duration-300"
-                    >
-                        <Plus size={20} />
-                        New Note
-                    </button>
-                </div>
-            </header>
+        <div className="min-h-screen bg-white flex flex-col items-center p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Goggins Notes</h1>
+            <p className="text-gray-600 mb-6">Stay focused and take charge of your thoughts</p>
 
-            <main className="max-w-7xl mx-auto p-4">
-                {/* Create Note Modal - Full Screen on Mobile */}
-                {isCreateModalOpen && (
-                    <div className="fixed inset-0 bg-gray-900 md:bg-black/50 flex flex-col md:items-center md:justify-center z-50">
-                        <div className="bg-gray-900 md:bg-gray-800 w-full md:max-w-md md:rounded-xl md:shadow-2xl text-white min-h-screen md:min-h-0">
-                            {/* Mobile Modal Header */}
-                            <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur-lg border-b border-gray-800 p-4 flex items-center gap-4 md:hidden">
-                                <button
-                                    onClick={resetForm}
-                                    className="text-gray-400"
-                                >
-                                    <ChevronLeft size={24} />
+            <button 
+                onClick={() => setIsCreateModalOpen(true)} 
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
+                <Plus size={18} className="inline-block mr-2" /> New Note
+            </button>
+
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/40">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-96">
+                        <h2 className="text-xl font-semibold mb-4">Create a New Note</h2>
+                        {error && <p className="text-red-500 mb-2">{error}</p>}
+                        <form onSubmit={handleCreateNote}>
+                            <input 
+                                type="text" 
+                                placeholder="Note Title" 
+                                value={title} 
+                                onChange={(e) => setTitle(e.target.value)} 
+                                className="w-full p-2 border rounded-lg mb-3"
+                            />
+                            <textarea 
+                                placeholder="Note Content" 
+                                value={content} 
+                                onChange={(e) => setContent(e.target.value)} 
+                                rows={4} 
+                                className="w-full p-2 border rounded-lg mb-3"
+                            ></textarea>
+                            <div className="flex gap-2">
+                                <button 
+                                    type="button" 
+                                    onClick={resetForm} 
+                                    className="flex-1 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">
+                                    Cancel
                                 </button>
-                                <h2 className="text-lg font-semibold">Create New Note</h2>
-                            </div>
-
-                            {/* Desktop Modal Header */}
-                            <div className="hidden md:flex justify-between items-center p-4 border-b border-gray-700">
-                                <h2 className="text-xl font-semibold">Create New Note</h2>
-                                <button
-                                    onClick={resetForm}
-                                    className="text-gray-400 hover:text-white transition duration-300"
-                                >
-                                    <X size={20} />
+                                <button 
+                                    type="submit" 
+                                    disabled={isCreating} 
+                                    className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                    {isCreating ? 'Creating...' : 'Create Note'}
                                 </button>
                             </div>
-                            
-                            <div className="p-4">
-                                {error && (
-                                    <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded-lg mb-4">
-                                        {error}
-                                    </div>
-                                )}
-
-                                <form onSubmit={handleCreateNote} className="space-y-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Note Title"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-800 md:bg-gray-700 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-300"
-                                    />
-                                    <textarea
-                                        placeholder="Note Content"
-                                        value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        rows={8}
-                                        className="w-full px-4 py-3 bg-gray-800 md:bg-gray-700 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-300 resize-none"
-                                    />
-                                    
-                                    {/* Mobile Submit Button */}
-                                    <button
-                                        type="submit"
-                                        disabled={isCreating}
-                                        className="md:hidden fixed bottom-4 right-4 left-4 bg-blue-500 rounded-lg py-3 hover:bg-blue-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    >
-                                        {isCreating ? (
-                                            <>
-                                                <Loader2 size={16} className="animate-spin" />
-                                                Creating...
-                                            </>
-                                        ) : (
-                                            'Create Note'
-                                        )}
-                                    </button>
-
-                                    {/* Desktop Buttons */}
-                                    <div className="hidden md:flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            className="flex-1 px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition duration-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={isCreating}
-                                            className="flex-1 px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            {isCreating ? (
-                                                <>
-                                                    <Loader2 size={16} className="animate-spin" />
-                                                    Creating...
-                                                </>
-                                            ) : (
-                                                'Create Note'
-                                            )}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                        </form>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Notes Grid - Responsive Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pt-4">
-                    {notes.length > 0 ? (
-                        notes
-                            .map((note) => (
-                                <div
-                                    key={note._id}
-                                    className={`group relative p-4 md:p-6 rounded-xl transition duration-300`}
-                                >
-                                    {/* Mobile-friendly Actions */}
-                                    <div className="absolute top-2 right-2 md:top-3 md:right-3 flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleDeleteNote(note._id)}
-                                            className="p-2 md:p-1.5 rounded-full bg-gray-700 text-gray-400 md:opacity-0 group-hover:opacity-100 transition duration-300 hover:bg-red-500/20 hover:text-red-400"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-
-                                    {/* Content with better mobile spacing */}
-                                    <div className="space-y-2 md:space-y-3 text-white">
-                                        <h3 className="text-lg font-semibold pr-16 line-clamp-2">{note.title}</h3>
-                                        <p className="text-gray-400 text-sm line-clamp-3">{note.content}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {new Date(note.createdAt).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))
-                    ) : (
-                        <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
-                            <p className="text-center mb-2">No notes yet</p>
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="text-blue-400 hover:text-blue-300 transition duration-300"
-                            >
-                                Create your first note
+            <div className="mt-6 w-full max-w-2xl">
+                {notes.length > 0 ? (
+                    notes.map((note) => (
+                        <div key={note._id} className="bg-gray-100 p-4 rounded-lg shadow-sm mb-4 relative">
+                            <h3 className="text-lg font-semibold text-gray-900">{note.title}</h3>
+                            <p className="text-gray-600 mt-1">{note.content}</p>
+                            <p className="text-xs text-gray-500 mt-2">
+                                {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                            <button 
+                                onClick={() => handleDeleteNote(note._id)} 
+                                className="absolute top-3 right-3 text-gray-400 hover:text-red-500">
+                                <Trash2 size={16} />
                             </button>
                         </div>
-                    )}
-                </div>
-            </main>
+                    ))
+                ) : (
+                    <p className="text-gray-400 text-center">No notes yet. Start by creating one!</p>
+                )}
+            </div>
         </div>
     );
 };

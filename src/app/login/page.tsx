@@ -66,123 +66,83 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <Toaster position="top-center" reverseOrder={false} />
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto">
-            {/* Header with proper responsive margins */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between mb-8 sm:mb-12">
-              <div className="w-full sm:w-auto">
-                <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
-                  Welcome Back
-                </h1>
-                <p className="text-sm text-slate-600 mt-1">
-                  Login to get verified
-                </p>
-              </div>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-0">
+    <Toaster position="top-center" reverseOrder={false} />
+    <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">
+        Welcome Back to <span className="text-blue-600">Goggins</span>
+      </h1>
+      <p className="text-sm text-gray-600 text-center mt-2">Login to continue</p>
 
-            {/* Rest of your content */}
-            <div className="bg-white rounded-xl shadow-sm border border-yellow-400 overflow-hidden">
-              {/* ... rest of your form content ... */}
-            </div>
-          </div>
+      {/* Login Form */}
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+        {/* Email Input */}
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={user.email}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+            placeholder="you@example.com"
+            required
+          />
         </div>
 
-        {/* Main Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-yellow-400 overflow-hidden">
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="space-y-6">
-              {/* Email Input */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-slate-600 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={user.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-colors"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              {/* Password Input */}
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-600 mb-2"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={user.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-colors"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="text-right">
-                <a
-                  href="#"
-                  className="text-sm text-slate-600 hover:text-slate-800 transition-colors"
-                >
-                  Forgot password?
-                </a>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm">
-                  {error}
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Logging in..." : "Log In"}
-              </button>
-
-              {/* Sign Up Link */}
-              <div className="text-center space-y-2">
-                <p className="text-sm text-slate-600">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/signup"
-                    className="font-medium text-slate-800 hover:text-slate-600 transition-colors"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-                <Link
-                  href="/"
-                  className="inline-block text-xs text-slate-600 hover:text-slate-800 transition-colors"
-                >
-                  Back to Home
-                </Link>
-              </div>
-            </div>
-          </form>
+        {/* Password Input */}
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={user.password}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+            placeholder="••••••••"
+            required
+          />
         </div>
+
+        {/* Forgot Password */}
+        <div className="text-right">
+          <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+            Forgot password?
+          </a>
+        </div>
+
+        {/* Error Message */}
+        {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
+
+        {/* Login Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "Logging in..." : "Log In"}
+        </button>
+      </form>
+
+      {/* Sign Up & Home Links */}
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+            Sign up
+          </Link>
+        </p>
+        <Link href="/" className="inline-block text-xs text-gray-600 hover:text-gray-800 transition-colors mt-2">
+          Back to Home
+        </Link>
       </div>
     </div>
+  </div>
   );
 }
