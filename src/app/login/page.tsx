@@ -26,8 +26,13 @@ export default function Login() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUser((prev) => ({ ...prev, [name]: value }));
+    setUser((prev) => {
+      const updatedUser = { ...prev, [name]: value };
+      console.log("Updated user inside setUser:", updatedUser);
+      return updatedUser;
+    });
   };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
