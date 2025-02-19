@@ -126,7 +126,7 @@ const Dashboard = () => {
                         >
                             <Menu size={24} />
                         </button>
-                        <h1 className="text-xl font-bold text-gray-900">Goggins Notes</h1>
+                        <h1 className="text-xl font-bold text-gray-900">Roger That!</h1>
                     </div>
                     <button 
                         onClick={() => setIsCreateModalOpen(true)}
