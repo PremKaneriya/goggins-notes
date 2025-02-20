@@ -8,7 +8,6 @@ type Note = {
     title: string;
     content: string;
     createdAt: string;
-    pinned?: boolean;
     is_deleted: boolean;
 };
 
@@ -33,7 +32,7 @@ const Dashboard = () => {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || "Failed to fetch notes");
     
-                setNotes(data);
+                setNotes(data.filter((note: Note) => !note.is_deleted));
             } catch (err) {
                 console.error(err);
                 setError("Failed to load notes");
@@ -87,34 +86,17 @@ const Dashboard = () => {
     const handleDeleteNote = async (id: string) => {
         try {
             const res = await fetch("/api/auth/notes", {
-                method: "DELETE",
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ noteId: id }),
             });
 
             if (!res.ok) throw new Error("Failed to delete note");
 
-            setNotes((prev) => prev.filter((note) => note._id !== id));
+            setNotes(notes.filter((note) => note._id !== id));
         } catch (err) {
             console.error(err);
             setError("Failed to delete note");
-        }
-    };
-
-    // Pin/Unpin Note
-    const handlePinNote = async (id: string) => {
-        const noteToUpdate = notes.find(note => note._id === id);
-        if (!noteToUpdate) return;
-
-        try {
-            setNotes((prev) =>
-                prev.map((note) => (note._id === id ? { ...note, pinned: !note.pinned } : note))
-            );
-        } catch (err) {
-            console.error(err);
-            setNotes((prev) =>
-                prev.map((note) => (note._id === id ? { ...note, pinned: noteToUpdate.pinned } : note))
-            );
         }
     };
 
@@ -250,28 +232,13 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pt-4">
                     {notes.length > 0 ? (
                         notes
-                            .sort((a, b) => Number(b.pinned) - Number(a.pinned))
                             .map((note) => (
                                 <div
                                     key={note._id}
-                                    className={`group relative p-4 md:p-6 rounded-xl transition duration-300 ${
-                                        note.pinned
-                                            ? 'bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-500/20'
-                                            : 'bg-gray-800 hover:bg-gray-750'
-                                    }`}
+                                    className={`group relative p-4 md:p-6 rounded-xl transition duration-300`}
                                 >
                                     {/* Mobile-friendly Actions */}
                                     <div className="absolute top-2 right-2 md:top-3 md:right-3 flex items-center gap-2">
-                                        <button
-                                            onClick={() => handlePinNote(note._id)}
-                                            className={`p-2 md:p-1.5 rounded-full transition duration-300 ${
-                                                note.pinned
-                                                    ? 'bg-blue-500/20 text-blue-400'
-                                                    : 'bg-gray-700 text-gray-400 md:opacity-0 group-hover:opacity-100 hover:bg-gray-600'
-                                            }`}
-                                        >
-                                            <Pin size={16} />
-                                        </button>
                                         <button
                                             onClick={() => handleDeleteNote(note._id)}
                                             className="p-2 md:p-1.5 rounded-full bg-gray-700 text-gray-400 md:opacity-0 group-hover:opacity-100 transition duration-300 hover:bg-red-500/20 hover:text-red-400"

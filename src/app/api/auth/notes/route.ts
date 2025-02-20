@@ -43,25 +43,20 @@ export async function POST(req: NextRequest) {
 }
 
 // Delete a note
-export async function DELETE(req: NextRequest) {
+export async function PATCH(req: Request) {
     try {
-        const userId = await getDataFromToken(req);
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { noteId, is_deleted } = await req.json();
 
-        const { noteId } = await req.json();
         if (!noteId) {
-            return NextResponse.json({ error: "Note ID is required" }, { status: 400 });
+            return new Response(JSON.stringify({ error: "Note ID is required" }), { status: 400 });
         }
 
-        const note = await Note.findOneAndDelete({ _id: noteId, userId });
-        if (!note) {
-            return NextResponse.json({ error: "Note not found or unauthorized" }, { status: 404 });
-        }
+        await Note.updateOne({ _id: noteId }, { is_deleted: true });
+        return new Response(JSON.stringify({ message: "Note deleted successfully" }));
 
-        return NextResponse.json({ message: "Note deleted successfully" });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message, message: "Failed to delete note" }, { status: 500 });
+
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+    } catch (error) {
+        return new Response(JSON.stringify({ error: "Failed to update note" }), { status: 500 });
     }
 }
