@@ -73,9 +73,7 @@ const Dashboard = () => {
     const handleGetProfile = async () => {
         try {
             const res = await fetch("/api/profile", { credentials: "include" });
-            console.log("Response status:", res.status);
             const text = await res.text();
-            console.log("Raw response:", text);
 
             if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
 
@@ -101,7 +99,6 @@ const Dashboard = () => {
         };
         fetchNotes();
         handleGetProfile();
-        console.log("Profile state updated:", profile);
     }, []);
 
     const handleCreateNote = async (title: string, content: string) => {

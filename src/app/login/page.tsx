@@ -28,7 +28,6 @@ export default function Login() {
     const { name, value } = e.target;
     setUser((prev) => {
       const updatedUser = { ...prev, [name]: value };
-      console.log("Updated user inside setUser:", updatedUser);
       return updatedUser;
     });
   };
@@ -58,7 +57,6 @@ export default function Login() {
       router.push("/dashboard");
     } catch (error: any) {
       setError(error.message);
-      console.log(error);
       toast.error(error.message);
     } finally {
       setLoading(false);
