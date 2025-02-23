@@ -11,10 +11,8 @@ export async function GET(
 ) {
     try {
         const userId = await getDataFromToken(req);
-        console.log("Extracted userId:", userId);
 
         const user = await User.findById(userId);
-        console.log("Fetched user from DB:", user);
         
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
