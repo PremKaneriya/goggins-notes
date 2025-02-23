@@ -2,6 +2,7 @@ import mongoose, { model, models } from "mongoose";
 
 export interface MyUser {
   _id: mongoose.Types.ObjectId;
+  firstName: string;
   phoneNumber: number;
   email: string;
   password: string;
@@ -24,6 +25,10 @@ const userSchema = new mongoose.Schema({
       type: String,
       required: true,
   },
+  firstName: {
+      type: String,
+      required: true
+  }
 }, {
   timestamps: true,
 });

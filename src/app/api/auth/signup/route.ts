@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
 
-    const { email, password, phoneNumber } = reqBody;
+    const { email, password, phoneNumber, firstName } = reqBody;
 
     const user = await User.findOne({ email }).select("+password");
 
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       phoneNumber,
+      firstName
     });
 
     const savedUser = await newUser.save();

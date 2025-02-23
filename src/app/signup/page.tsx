@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function Signup() {
   const router = useRouter();
-  const [user, setUser] = useState({ email: "", password: "", phoneNumber: "" });
+  const [user, setUser] = useState({ email: "", password: "", phoneNumber: "", firstName: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,6 +70,23 @@ export default function Signup() {
               onChange={handleInputChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
               placeholder="Enter your phone number"
+              required
+            />
+          </div>
+
+          {/* Name Input */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={user.firstName}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+              placeholder="Enter your name"
               required
             />
           </div>

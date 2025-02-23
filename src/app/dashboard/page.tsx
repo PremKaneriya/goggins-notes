@@ -10,6 +10,11 @@ type Note = {
     is_deleted: boolean;
 };
 
+type Profile = {
+    name: string;
+    notesCreated: number;
+}
+
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -49,6 +54,26 @@ const Dashboard = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [profile, setProfile] = useState<Profile | null>(null);
+
+    const handleGetProfile = async () => {
+        try {
+            const res = await fetch("/api/profile", { credentials: "include" });
+            console.log("Response status:", res.status);
+            const text = await res.text();
+            console.log("Raw response:", text);
+    
+            if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
+    
+            const data = JSON.parse(text);
+            console.log("Parsed data:", data);
+    
+            setProfile(data);
+        } catch (err) {
+            console.error("Profile fetch error:", err);
+        }
+    };
+       
 
     useEffect(() => {
         const fetchNotes = async () => {
@@ -64,6 +89,9 @@ const Dashboard = () => {
             }
         };
         fetchNotes();
+        handleGetProfile();
+        console.log("Profile state updated:", profile);
+
     }, []);
 
     const handleCreateNote = async (title: string, content: string) => {
@@ -142,7 +170,13 @@ const Dashboard = () => {
                 >
                     <Menu size={20} />
                 </button>
-                <h1 className="font-bold text-xl">Notes App</h1>
+                <h1 className="font-bold text-xl">{profile ? (
+                        <div>
+                            <h1>{profile.name} Goggins</h1>
+                        </div>
+                    ) : (
+                        <p>Loading profile...</p>
+                    )}</h1>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
                     className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -157,7 +191,13 @@ const Dashboard = () => {
                 ${isSidebarOpen ? 'w-64 sm:w-64' : 'w-64 sm:w-20'} h-screen`}>
                 <div className="p-4 hidden sm:block">
                     <div className="flex items-center justify-between mb-8">
-                        <h1 className={`font-bold text-xl ${!isSidebarOpen && 'sm:hidden'}`}>Notes App</h1>
+                        <h1 className={`font-bold text-xl ${!isSidebarOpen && 'sm:hidden'}`}> {profile ? (
+                        <div>
+                            <h1>{profile.name} Goggins</h1>
+                        </div>
+                    ) : (
+                        <p>Loading profile...</p>
+                    )}</h1>
                         <button 
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
