@@ -1,7 +1,6 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { Trash2, Plus, X, Loader2, Menu, Search } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Trash2, Plus, X, Loader2, Menu, Search, Edit, Calendar } from 'lucide-react';
 
 type Note = {
     _id: string;
@@ -11,32 +10,55 @@ type Note = {
     is_deleted: boolean;
 };
 
+interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    children: React.ReactNode;
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-40 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md scale-in-center max-h-[90vh] flex flex-col">
+                <div className="p-4 sm:p-6 overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6 sticky top-0 bg-white">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{title}</h2>
+                        <button 
+                            onClick={onClose} 
+                            className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Dashboard = () => {
     const [notes, setNotes] = useState<Note[]>([]);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    // Fetch notes when component loads
     useEffect(() => {
         const fetchNotes = async () => {
             try {
-                const res = await fetch("/api/auth/notes", {
-                    credentials: "include",
-                });
-    
+                const res = await fetch("/api/auth/notes", { credentials: "include" });
+                if (!res.ok) throw new Error("Failed to fetch notes");
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Failed to fetch notes");
-    
                 setNotes(data.filter((note: Note) => !note.is_deleted));
             } catch (err) {
                 console.error(err);
-                setError("Failed to load notes");
             } finally {
                 setIsLoading(false);
             }
@@ -44,212 +66,316 @@ const Dashboard = () => {
         fetchNotes();
     }, []);
 
-    const filteredNotes = notes.filter(note => 
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const resetForm = () => {
-        setTitle("");
-        setContent("");
-        setError("");
-        setIsCreateModalOpen(false);
-    };
-
-    // Create Note
-    const handleCreateNote = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title.trim() || !content.trim()) {
-            setError("Title and Content are required!");
-            return;
-        }
-    
+    const handleCreateNote = async (title: string, content: string) => {
+        if (!title.trim() || !content.trim()) return;
         try {
             setIsCreating(true);
             const res = await fetch("/api/auth/notes", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title, content }),
                 credentials: "include",
             });
-    
+            if (!res.ok) throw new Error("Failed to create note");
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Failed to create note");
-    
             setNotes([data.note, ...notes]);
-            resetForm();
+            setIsCreateModalOpen(false);
         } catch (err) {
             console.error(err);
-            setError("Failed to create note");
         } finally {
             setIsCreating(false);
         }
     };
 
-    // Delete Note
-    const handleDeleteNote = async (id: string) => {
+    const handleEditNote = async (title: string, content: string) => {
+        if (!selectedNote || !title.trim() || !content.trim()) return;
+        try {
+            const res = await fetch("/api/auth/notes", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ noteId: selectedNote._id, title, content }),
+            });
+            if (!res.ok) throw new Error("Failed to update note");
+            setNotes(notes.map(n => (n._id === selectedNote._id ? { ...n, title, content } : n)));
+            setIsEditModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteNote = async (noteId: string) => {
         try {
             const res = await fetch("/api/auth/notes", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ noteId: id }),
+                credentials: "include",
+                body: JSON.stringify({ noteId, is_deleted: true }),
             });
-
             if (!res.ok) throw new Error("Failed to delete note");
-
-            setNotes(notes.filter((note) => note._id !== id));
+            setNotes(notes.filter(n => n._id !== noteId));
         } catch (err) {
             console.error(err);
-            setError("Failed to delete note");
         }
     };
 
+    const filteredNotes = notes.filter(n => 
+        n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        n.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-10">
-                <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center">
+        <div className="min-h-screen bg-gray-50 flex flex-col sm:flex-row">
+            {/* Mobile Header */}
+            <div className="sm:hidden bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-30">
+                <button 
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                    <Menu size={20} />
+                </button>
+                <h1 className="font-bold text-xl">Notes App</h1>
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                    <Plus size={20} />
+                </button>
+            </div>
+
+            {/* Sidebar */}
+            <div className={`bg-white shadow-lg fixed sm:relative z-20 transition-all duration-300 
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'} 
+                ${isSidebarOpen ? 'w-64 sm:w-64' : 'w-64 sm:w-20'} h-screen`}>
+                <div className="p-4 hidden sm:block">
+                    <div className="flex items-center justify-between mb-8">
+                        <h1 className={`font-bold text-xl ${!isSidebarOpen && 'sm:hidden'}`}>Notes App</h1>
                         <button 
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="mr-3 text-gray-600 md:hidden"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            <Menu size={24} />
+                            <Menu size={20} />
                         </button>
-                        <h1 className="text-xl font-bold text-gray-900">Roger That!</h1>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition"
+                        className={`w-full bg-blue-500 text-white rounded-lg p-3 flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors ${!isSidebarOpen && 'sm:p-2'}`}
                     >
-                        <Plus size={24} />
+                        <Plus size={20} />
+                        <span className={!isSidebarOpen ? 'sm:hidden' : ''}>New Note</span>
                     </button>
-                </div>
-                
-                {/* Search bar */}
-                <div className="p-4 pt-0 pb-4">
-                    <div className="relative">
-                        <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search notes..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                </div>
-            </header>
-
-            {/* Mobile menu */}
-            {isMobileMenuOpen && (
-                <div className="fixed inset-0 bg-black/40 z-20">
-                    <div className="bg-white w-64 h-full p-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold">Menu</h2>
-                            <button onClick={() => setIsMobileMenuOpen(false)}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        {/* Add your menu items here */}
-                    </div>
-                </div>
-            )}
-
-            {/* Notes list */}
-            <div className="mt-32 px-4 pb-4">
-                <div className="max-w-2xl mx-auto space-y-4">
-                    {filteredNotes.length > 0 ? (
-                        filteredNotes.map((note) => (
-                            <div
-                                key={note._id}
-                                className="bg-white p-4 rounded-lg shadow-sm relative group"
-                            >
-                                <h3 className="text-lg font-semibold text-gray-900">{note.title}</h3>
-                                <p className="text-gray-600 mt-1">{note.content}</p>
-                                <p className="text-xs text-gray-500 mt-2">
-                                    {new Date(note.createdAt).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
-                                </p>
-                                <button
-                                    onClick={() => handleDeleteNote(note._id)}
-                                    className="absolute top-3 right-3 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No notes found</p>
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="mt-4 text-blue-500 hover:text-blue-600"
-                            >
-                                Create your first note
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Create note modal */}
-            {isCreateModalOpen && (
-                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-30">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold mb-4">Create a New Note</h2>
-                            {error && <p className="text-red-500 mb-2">{error}</p>}
-                            <form onSubmit={handleCreateNote}>
-                                <input
-                                    type="text"
-                                    placeholder="Note Title"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full p-3 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <textarea
-                                    placeholder="Note Content"
-                                    value={content}
-                                    onChange={(e) => setContent(e.target.value)}
-                                    rows={4}
-                                    className="w-full p-3 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={resetForm}
-                                        className="flex-1 py-2 border rounded-lg text-gray-600 hover:bg-gray-100"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isCreating}
-                                        className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                                    >
-                                        {isCreating ? 'Creating...' : 'Create Note'}
-                                    </button>
-                                </div>
-                            </form>
+            {/* Overlay for mobile sidebar */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/20 z-10 sm:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                ></div>
+            )}
+
+            {/* Main Content */}
+            <div className="flex-1 min-w-0 flex flex-col">
+                <header className="bg-white shadow-sm p-4 sticky top-0 sm:top-0 z-10">
+                    <div className="max-w-6xl mx-auto w-full">
+                        <div className="relative flex items-center">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Search notes..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                         </div>
                     </div>
-                </div>
-            )}
+                </header>
+
+                <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredNotes.map(note => (
+                            <div key={note._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4">
+                                <div className="flex justify-between items-start mb-3">
+                                    <h3 className="font-semibold text-lg text-gray-800 break-words">{note.title}</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => { setSelectedNote(note); setIsEditModalOpen(true); }}
+                                            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <Edit size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteNote(note._id)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <p className="text-gray-600 break-words">{note.content}</p>
+                                <div className="flex items-center mt-4 text-sm text-gray-400">
+                                    <Calendar size={14} className="mr-1" />
+                                    {new Date(note.createdAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    {filteredNotes.length === 0 && (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500">No notes found. Create one to get started!</p>
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create Note">
+                <NoteForm onSubmit={handleCreateNote} submitButtonText="Create Note" isSubmitting={isCreating} />
+            </Modal>
+
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Note">
+                <NoteForm note={selectedNote} onSubmit={handleEditNote} submitButtonText="Save Changes" />
+            </Modal>
         </div>
+    );
+};
+
+const NoteForm: React.FC<{
+    note?: Note | null;
+    onSubmit: (title: string, content: string) => void;
+    submitButtonText: string;
+    isSubmitting?: boolean;
+}> = ({ note, onSubmit, submitButtonText, isSubmitting }) => {
+    const [localTitle, setLocalTitle] = useState(note?.title || "");
+    const [localContent, setLocalContent] = useState(note?.content || "");
+    const [errors, setErrors] = useState({
+        title: "",
+        content: ""
+    });
+    const [touched, setTouched] = useState({
+        title: false,
+        content: false
+    });
+
+    useEffect(() => {
+        setLocalTitle(note?.title || "");
+        setLocalContent(note?.content || "");
+        // Reset form state when note changes
+        setErrors({ title: "", content: "" });
+        setTouched({ title: false, content: false });
+    }, [note]);
+
+    const validateField = (name: string, value: string) => {
+        if (!value.trim()) {
+            return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+        }
+        return "";
+    };
+
+    const handleBlur = (field: 'title' | 'content') => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        setErrors(prev => ({
+            ...prev,
+            [field]: validateField(field, field === 'title' ? localTitle : localContent)
+        }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Validate all fields
+        const titleError = validateField('title', localTitle);
+        const contentError = validateField('content', localContent);
+        
+        setErrors({
+            title: titleError,
+            content: contentError
+        });
+        
+        setTouched({
+            title: true,
+            content: true
+        });
+
+        // If no errors, submit the form
+        if (!titleError && !contentError) {
+            onSubmit(localTitle, localContent);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="w-full">
+            <div className="space-y-4">
+                <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                        Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        id="title"
+                        type="text"
+                        value={localTitle}
+                        onChange={(e) => {
+                            setLocalTitle(e.target.value);
+                            if (touched.title) {
+                                setErrors(prev => ({
+                                    ...prev,
+                                    title: validateField('title', e.target.value)
+                                }));
+                            }
+                        }}
+                        onBlur={() => handleBlur('title')}
+                        className={`w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base
+                            ${errors.title && touched.title ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                        placeholder="Enter note title..."
+                    />
+                    {errors.title && touched.title && (
+                        <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+                    )}
+                </div>
+                <div>
+                    <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                        Content <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                        id="content"
+                        value={localContent}
+                        onChange={(e) => {
+                            setLocalContent(e.target.value);
+                            if (touched.content) {
+                                setErrors(prev => ({
+                                    ...prev,
+                                    content: validateField('content', e.target.value)
+                                }));
+                            }
+                        }}
+                        onBlur={() => handleBlur('content')}
+                        className={`w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-40 sm:h-48 text-base resize-none
+                            ${errors.content && touched.content ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                        placeholder="Enter note content..."
+                    />
+                    {errors.content && touched.content && (
+                        <p className="mt-1 text-sm text-red-500">{errors.content}</p>
+                    )}
+                </div>
+                <button
+                    type="submit"
+                    disabled={isSubmitting || (touched.title && touched.content && (!!errors.title || !!errors.content))}
+                    className="w-full bg-blue-500 text-white rounded-lg p-3 sm:p-4 hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base font-medium"
+                >
+                    {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+                    {submitButtonText}
+                </button>
+            </div>
+        </form>
     );
 };
 

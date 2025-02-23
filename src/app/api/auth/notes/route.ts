@@ -60,3 +60,18 @@ export async function PATCH(req: Request) {
         return new Response(JSON.stringify({ error: "Failed to update note" }), { status: 500 });
     }
 }
+
+export async function PUT(req: Request) {
+    try {
+        const { noteId, title, content } = await req.json();
+
+        if (!noteId) {
+            return new Response(JSON.stringify({ error: "Note ID is required" }), { status: 400 });
+        }
+
+        await Note.updateOne({ _id: noteId }, { title, content });
+        return new Response(JSON.stringify({ message: "Note updated successfully" }));
+    } catch (error) {
+        return new Response(JSON.stringify({ error: "Failed to update note" }), { status: 500 });
+    }
+}
