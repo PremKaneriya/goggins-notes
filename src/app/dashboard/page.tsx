@@ -1,6 +1,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Trash2, Plus, X, Loader2, Menu, Search, Edit, Calendar } from 'lucide-react';
+import {
+    Trash2,
+    Plus,
+    X,
+    Loader2,
+    Menu,
+    Search,
+    Edit,
+    Calendar,
+    ChevronRight,
+} from "lucide-react";
+import GroupNotes from "../components/groupnotes";
 
 type Note = {
     _id: string;
@@ -13,7 +24,7 @@ type Note = {
 type Profile = {
     name: string;
     notesCreated: number;
-}
+};
 
 interface ModalProps {
     isOpen: boolean;
@@ -30,9 +41,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md scale-in-center max-h-[90vh] flex flex-col">
                 <div className="p-4 sm:p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-6 sticky top-0 bg-white">
-                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{title}</h2>
-                        <button 
-                            onClick={onClose} 
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                            {title}
+                        </h2>
+                        <button
+                            onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-full"
                         >
                             <X size={20} />
@@ -55,25 +68,21 @@ const Dashboard = () => {
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [profile, setProfile] = useState<Profile | null>(null);
+    const [activeView, setActiveView] = useState<"notes" | "groups">("notes");
 
     const handleGetProfile = async () => {
         try {
             const res = await fetch("/api/profile", { credentials: "include" });
-            console.log("Response status:", res.status);
             const text = await res.text();
-            console.log("Raw response:", text);
-    
+
             if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
-    
+
             const data = JSON.parse(text);
-            console.log("Parsed data:", data);
-    
             setProfile(data);
         } catch (err) {
             console.error("Profile fetch error:", err);
         }
     };
-       
 
     useEffect(() => {
         const fetchNotes = async () => {
@@ -90,8 +99,6 @@ const Dashboard = () => {
         };
         fetchNotes();
         handleGetProfile();
-        console.log("Profile state updated:", profile);
-
     }, []);
 
     const handleCreateNote = async (title: string, content: string) => {
@@ -125,7 +132,11 @@ const Dashboard = () => {
                 body: JSON.stringify({ noteId: selectedNote._id, title, content }),
             });
             if (!res.ok) throw new Error("Failed to update note");
-            setNotes(notes.map(n => (n._id === selectedNote._id ? { ...n, title, content } : n)));
+            setNotes(
+                notes.map((n) =>
+                    n._id === selectedNote._id ? { ...n, title, content } : n
+                )
+            );
             setIsEditModalOpen(false);
         } catch (err) {
             console.error(err);
@@ -141,15 +152,16 @@ const Dashboard = () => {
                 body: JSON.stringify({ noteId, is_deleted: true }),
             });
             if (!res.ok) throw new Error("Failed to delete note");
-            setNotes(notes.filter(n => n._id !== noteId));
+            setNotes(notes.filter((n) => n._id !== noteId));
         } catch (err) {
             console.error(err);
         }
     };
 
-    const filteredNotes = notes.filter(n => 
-        n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        n.content.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredNotes = notes.filter(
+        (n) =>
+            n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            n.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (isLoading) {
@@ -164,60 +176,103 @@ const Dashboard = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col sm:flex-row">
             {/* Mobile Header */}
             <div className="sm:hidden bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-30">
-                <button 
+                <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                     <Menu size={20} />
                 </button>
-                <h1 className="font-bold text-xl">{profile ? (
-                        <div>
-                            <h1>{profile.name} Goggins</h1>
-                        </div>
-                    ) : (
-                        <p>Loading profile...</p>
-                    )}</h1>
+                <h1 className="font-bold text-xl">
+                    {profile ? <h1>{profile.name} Goggins</h1> : <p>Loading profile...</p>}
+                </h1>
+                {/* Add Note button stays here in mobile view */}
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
+                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors 
+            flex items-center justify-center 
+            shadow-sm hover:shadow-md 
+            font-medium text-sm 
+            active:bg-blue-700 
+            disabled:opacity-60 disabled:cursor-not-allowed 
+            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40">
                     <Plus size={20} />
                 </button>
             </div>
 
             {/* Sidebar */}
-            <div className={`bg-white shadow-lg fixed sm:relative z-20 transition-all duration-300 
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'} 
-                ${isSidebarOpen ? 'w-64 sm:w-64' : 'w-64 sm:w-20'} h-screen`}>
-                <div className="p-4 hidden sm:block">
+            <div
+                className={`bg-white shadow-lg fixed sm:relative z-20 transition-all duration-300 
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"} 
+        ${isSidebarOpen ? "w-64 sm:w-64" : "w-64 sm:w-20"} h-screen`}
+            >
+                <div className="p-4">
                     <div className="flex items-center justify-between mb-8">
-                        <h1 className={`font-bold text-xl ${!isSidebarOpen && 'sm:hidden'}`}> {profile ? (
-                        <div>
-                            <h1>{profile.name} Goggins</h1>
-                        </div>
-                    ) : (
-                        <p>Loading profile...</p>
-                    )}</h1>
-                        <button 
+                        <h1 className={`font-bold text-xl ${!isSidebarOpen && "sm:hidden"}`}>
+                            {profile ? <h1>{profile.name} Goggins</h1> : <p>Loading profile...</p>}
+                        </h1>
+                        <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <Menu size={20} />
                         </button>
                     </div>
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className={`w-full bg-blue-500 text-white rounded-lg p-3 flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors ${!isSidebarOpen && 'sm:p-2'}`}
-                    >
-                        <Plus size={20} />
-                        <span className={!isSidebarOpen ? 'sm:hidden' : ''}>New Note</span>
-                    </button>
+                    <div className="space-y-2">
+                        {/* Add Note button (ONLY visible on larger screens) */}
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className={`hidden sm:flex w-full bg-blue-500 mb-4 text-white rounded-lg p-3 items-center justify-center gap-2 
+                        hover:bg-blue-600 
+                        transition-all duration-300 ease-in-out 
+                        ${!isSidebarOpen && "sm:p-2"} 
+                        shadow-md hover:shadow-lg 
+                        font-semibold tracking-wide 
+                        disabled:opacity-50 disabled:cursor-not-allowed 
+                        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 
+                        hover:scale-105 active:scale-95`}
+                        >
+                            <Plus size={20} />
+                            <span className={!isSidebarOpen ? "sm:hidden" : ""}>New Note</span>
+                        </button>
+
+                        <div className="space-y-1 mt-4">
+                            <button
+                                onClick={() => setActiveView("notes")}
+                                className={`w-full p-3 rounded-xl flex items-center gap-3 
+    ${activeView === "notes"
+                                        ? "bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-inner shadow-blue-200/50"
+                                        : "bg-white text-gray-700 border-2 border-blue-300 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400"} 
+    transition-all duration-200 ease-in-out 
+    shadow-sm hover:shadow-md 
+    font-medium text-sm 
+    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50`}
+                            >
+                                <Calendar size={20} />
+                                <span className={!isSidebarOpen ? "sm:hidden" : ""}>My Notes</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveView("groups")}
+                                className={`w-full p-3 rounded-xl flex items-center gap-3 
+    ${activeView === "groups"
+                                        ? "bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-inner shadow-blue-200/50"
+                                        : "bg-white text-gray-700 border-2 border-blue-300 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400"} 
+    transition-all duration-200 ease-in-out 
+    shadow-sm hover:shadow-md 
+    font-medium text-sm 
+    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50`}
+                            >
+                                <ChevronRight size={20} />
+                                <span className={!isSidebarOpen ? "sm:hidden" : ""}>Group Notes</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Overlay for mobile sidebar */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/20 z-10 sm:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
@@ -228,7 +283,10 @@ const Dashboard = () => {
                 <header className="bg-white shadow-sm p-4 sticky top-0 sm:top-0 z-10">
                     <div className="max-w-6xl mx-auto w-full">
                         <div className="relative flex items-center">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                            <Search
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                                size={20}
+                            />
                             <input
                                 type="text"
                                 placeholder="Search notes..."
@@ -241,51 +299,83 @@ const Dashboard = () => {
                 </header>
 
                 <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredNotes.map(note => (
-                            <div key={note._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4">
-                                <div className="flex justify-between items-start mb-3">
-                                    <h3 className="font-semibold text-lg text-gray-800 break-words">{note.title}</h3>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => { setSelectedNote(note); setIsEditModalOpen(true); }}
-                                            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                                        >
-                                            <Edit size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteNote(note._id)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                    {activeView === "notes" ? (
+                        // Notes Grid View
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredNotes.map((note) => (
+                                <div
+                                    key={note._id}
+                                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4"
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h3 className="font-semibold text-lg text-gray-800 break-words">
+                                            {note.title}
+                                        </h3>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedNote(note);
+                                                    setIsEditModalOpen(true);
+                                                }}
+                                                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteNote(note._id)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 break-words">{note.content}</p>
+                                    <div className="flex items-center mt-4 text-sm text-gray-400">
+                                        <Calendar size={14} className="mr-1" />
+                                        {new Date(note.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <p className="text-gray-600 break-words">{note.content}</p>
-                                <div className="flex items-center mt-4 text-sm text-gray-400">
-                                    <Calendar size={14} className="mr-1" />
-                                    {new Date(note.createdAt).toLocaleDateString()}
+                            ))}
+                            {filteredNotes.length === 0 && (
+                                <div className="text-center py-12 col-span-full">
+                                    <p className="text-gray-500">No notes found. Create one to get started!</p>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                    
-                    {filteredNotes.length === 0 && (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No notes found. Create one to get started!</p>
+                            )}
                         </div>
+                    ) : (
+                        // Group Notes View
+                        <GroupNotes />
                     )}
                 </main>
             </div>
 
-            <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create Note">
-                <NoteForm onSubmit={handleCreateNote} submitButtonText="Create Note" isSubmitting={isCreating} />
+            {/* Modals */}
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Create Note"
+            >
+                <NoteForm
+                    onSubmit={handleCreateNote}
+                    submitButtonText="Create Note"
+                    isSubmitting={isCreating}
+                />
             </Modal>
 
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Note">
-                <NoteForm note={selectedNote} onSubmit={handleEditNote} submitButtonText="Save Changes" />
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Note"
+            >
+                <NoteForm
+                    note={selectedNote}
+                    onSubmit={handleEditNote}
+                    submitButtonText="Save Changes"
+                />
             </Modal>
         </div>
+
+
     );
 };
 
@@ -299,11 +389,11 @@ const NoteForm: React.FC<{
     const [localContent, setLocalContent] = useState(note?.content || "");
     const [errors, setErrors] = useState({
         title: "",
-        content: ""
+        content: "",
     });
     const [touched, setTouched] = useState({
         title: false,
-        content: false
+        content: false,
     });
 
     useEffect(() => {
@@ -321,29 +411,32 @@ const NoteForm: React.FC<{
         return "";
     };
 
-    const handleBlur = (field: 'title' | 'content') => {
-        setTouched(prev => ({ ...prev, [field]: true }));
-        setErrors(prev => ({
+    const handleBlur = (field: "title" | "content") => {
+        setTouched((prev) => ({ ...prev, [field]: true }));
+        setErrors((prev) => ({
             ...prev,
-            [field]: validateField(field, field === 'title' ? localTitle : localContent)
+            [field]: validateField(
+                field,
+                field === "title" ? localTitle : localContent
+            ),
         }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validate all fields
-        const titleError = validateField('title', localTitle);
-        const contentError = validateField('content', localContent);
-        
+        const titleError = validateField("title", localTitle);
+        const contentError = validateField("content", localContent);
+
         setErrors({
             title: titleError,
-            content: contentError
+            content: contentError,
         });
-        
+
         setTouched({
             title: true,
-            content: true
+            content: true,
         });
 
         // If no errors, submit the form
@@ -356,7 +449,10 @@ const NoteForm: React.FC<{
         <form onSubmit={handleSubmit} className="w-full">
             <div className="space-y-4">
                 <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                        htmlFor="title"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                         Title <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -366,15 +462,18 @@ const NoteForm: React.FC<{
                         onChange={(e) => {
                             setLocalTitle(e.target.value);
                             if (touched.title) {
-                                setErrors(prev => ({
+                                setErrors((prev) => ({
                                     ...prev,
-                                    title: validateField('title', e.target.value)
+                                    title: validateField("title", e.target.value),
                                 }));
                             }
                         }}
-                        onBlur={() => handleBlur('title')}
+                        onBlur={() => handleBlur("title")}
                         className={`w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base
-                            ${errors.title && touched.title ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                            ${errors.title && touched.title
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200"
+                            }`}
                         placeholder="Enter note title..."
                     />
                     {errors.title && touched.title && (
@@ -382,7 +481,10 @@ const NoteForm: React.FC<{
                     )}
                 </div>
                 <div>
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                        htmlFor="content"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                         Content <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -391,15 +493,18 @@ const NoteForm: React.FC<{
                         onChange={(e) => {
                             setLocalContent(e.target.value);
                             if (touched.content) {
-                                setErrors(prev => ({
+                                setErrors((prev) => ({
                                     ...prev,
-                                    content: validateField('content', e.target.value)
+                                    content: validateField("content", e.target.value),
                                 }));
                             }
                         }}
-                        onBlur={() => handleBlur('content')}
+                        onBlur={() => handleBlur("content")}
                         className={`w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-40 sm:h-48 text-base resize-none
-                            ${errors.content && touched.content ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                            ${errors.content && touched.content
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200"
+                            }`}
                         placeholder="Enter note content..."
                     />
                     {errors.content && touched.content && (
@@ -408,7 +513,12 @@ const NoteForm: React.FC<{
                 </div>
                 <button
                     type="submit"
-                    disabled={isSubmitting || (touched.title && touched.content && (!!errors.title || !!errors.content))}
+                    disabled={
+                        isSubmitting ||
+                        (touched.title &&
+                            touched.content &&
+                            (!!errors.title || !!errors.content))
+                    }
                     className="w-full bg-blue-500 text-white rounded-lg p-3 sm:p-4 hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base font-medium"
                 >
                     {isSubmitting && <Loader2 size={16} className="animate-spin" />}
