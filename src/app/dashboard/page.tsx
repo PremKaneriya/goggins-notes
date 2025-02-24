@@ -2,16 +2,13 @@
 import React, { useEffect, useState } from "react";
 import {
     Trash2,
-    Plus,
-    X,
     Loader2,
-    Menu,
     Search,
     Edit,
     Calendar,
-    ChevronRight,
 } from "lucide-react";
 import GroupNotes from "../components/groupnotes";
+import Sidebar from "../components/sidebar";
 
 type Note = {
     _id: string;
@@ -48,7 +45,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-full"
                         >
-                            <X size={20} />
+                            <span className="sr-only">Close</span>
+                            ×
                         </button>
                     </div>
                     {children}
@@ -66,18 +64,14 @@ const Dashboard = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [activeView, setActiveView] = useState<"notes" | "groups">("notes");
 
     const handleGetProfile = async () => {
         try {
             const res = await fetch("/api/profile", { credentials: "include" });
-            const text = await res.text();
-
             if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
-
-            const data = JSON.parse(text);
+            const data = await res.json();
             setProfile(data);
         } catch (err) {
             console.error("Profile fetch error:", err);
@@ -173,114 +167,16 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col sm:flex-row">
-            {/* Mobile Header */}
-            <div className="sm:hidden bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-30">
-                <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    <Menu size={20} />
-                </button>
-                <h1 className="font-bold text-xl">
-                    {profile ? <h1>{profile.name} Goggins</h1> : <p>Loading profile...</p>}
-                </h1>
-                {/* Add Note button stays here in mobile view */}
-                <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors 
-            flex items-center justify-center 
-            shadow-sm hover:shadow-md 
-            font-medium text-sm 
-            active:bg-blue-700 
-            disabled:opacity-60 disabled:cursor-not-allowed 
-            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40">
-                    <Plus size={20} />
-                </button>
-            </div>
+        <div className="min-h-screen bg-gray-50 flex">
+            <Sidebar
+                profile={profile}
+                activeView={activeView}
+                setActiveView={setActiveView}
+                onCreateNote={() => setIsCreateModalOpen(true)}
+            />
 
-            {/* Sidebar */}
-            <div
-                className={`bg-white shadow-lg fixed sm:relative z-20 transition-all duration-300 
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"} 
-        ${isSidebarOpen ? "w-64 sm:w-64" : "w-64 sm:w-20"} h-screen`}
-            >
-                <div className="p-4">
-                    <div className="flex items-center justify-between mb-8">
-                        <h1 className={`font-bold text-xl ${!isSidebarOpen && "sm:hidden"}`}>
-                            {profile ? <h1>{profile.name} Goggins</h1> : <p>Loading profile...</p>}
-                        </h1>
-                        <button
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                            <Menu size={20} />
-                        </button>
-                    </div>
-                    <div className="space-y-2">
-                        {/* Add Note button (ONLY visible on larger screens) */}
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className={`hidden sm:flex w-full bg-blue-500 mb-4 text-white rounded-lg p-3 items-center justify-center gap-2 
-                        hover:bg-blue-600 
-                        transition-all duration-300 ease-in-out 
-                        ${!isSidebarOpen && "sm:p-2"} 
-                        shadow-md hover:shadow-lg 
-                        font-semibold tracking-wide 
-                        disabled:opacity-50 disabled:cursor-not-allowed 
-                        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 
-                        hover:scale-105 active:scale-95`}
-                        >
-                            <Plus size={20} />
-                            <span className={!isSidebarOpen ? "sm:hidden" : ""}>New Note</span>
-                        </button>
-
-                        <div className="space-y-1 mt-4">
-                            <button
-                                onClick={() => setActiveView("notes")}
-                                className={`w-full p-3 rounded-xl flex items-center gap-3 
-    ${activeView === "notes"
-                                        ? "bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-inner shadow-blue-200/50"
-                                        : "bg-white text-gray-700 border-2 border-blue-300 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400"} 
-    transition-all duration-200 ease-in-out 
-    shadow-sm hover:shadow-md 
-    font-medium text-sm 
-    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50`}
-                            >
-                                <Calendar size={20} />
-                                <span className={!isSidebarOpen ? "sm:hidden" : ""}>My Notes</span>
-                            </button>
-
-                            <button
-                                onClick={() => setActiveView("groups")}
-                                className={`w-full p-3 rounded-xl flex items-center gap-3 
-    ${activeView === "groups"
-                                        ? "bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-inner shadow-blue-200/50"
-                                        : "bg-white text-gray-700 border-2 border-blue-300 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400"} 
-    transition-all duration-200 ease-in-out 
-    shadow-sm hover:shadow-md 
-    font-medium text-sm 
-    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50`}
-                            >
-                                <ChevronRight size={20} />
-                                <span className={!isSidebarOpen ? "sm:hidden" : ""}>Group Notes</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Overlay for mobile sidebar */}
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/20 z-10 sm:hidden"
-                    onClick={() => setIsSidebarOpen(false)}
-                ></div>
-            )}
-
-            {/* Main Content */}
-            <div className="flex-1 min-w-0 flex flex-col">
-                <header className="bg-white shadow-sm p-4 sticky top-0 sm:top-0 z-10">
+            <div className="ml-64 flex-1 min-w-0 flex flex-col">
+                <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
                     <div className="max-w-6xl mx-auto w-full">
                         <div className="relative flex items-center">
                             <Search
@@ -300,7 +196,6 @@ const Dashboard = () => {
 
                 <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
                     {activeView === "notes" ? (
-                        // Notes Grid View
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredNotes.map((note) => (
                                 <div
@@ -343,13 +238,11 @@ const Dashboard = () => {
                             )}
                         </div>
                     ) : (
-                        // Group Notes View
                         <GroupNotes />
                     )}
                 </main>
             </div>
 
-            {/* Modals */}
             <Modal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
@@ -374,8 +267,6 @@ const Dashboard = () => {
                 />
             </Modal>
         </div>
-
-
     );
 };
 
