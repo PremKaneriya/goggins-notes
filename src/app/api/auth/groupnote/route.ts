@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const groupNotes = await GroupNote.find({ userId }).sort({ createdAt: -1 }).lean();
+        const groupNotes = await GroupNote.find({ createdBy: userId }).sort({ createdAt: -1 }).lean();
         return NextResponse.json(groupNotes);
     } catch (error: any) {
         return NextResponse.json({ error: error.message, message: "Failed to fetch group notes" }, { status: 500 });
