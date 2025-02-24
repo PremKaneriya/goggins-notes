@@ -35,7 +35,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/40 backdrop--sm flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-xs sm:max-w-md md:max-w-lg max-h-[90vh] flex flex-col">
                 <div className="p-4 sm:p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white z-10">

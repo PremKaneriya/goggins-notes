@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Close menu" : "Open menu"}
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-200"
+                className="lg:hidden fixed bottom-8 left-4 z-50 p-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-200"
             >
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
