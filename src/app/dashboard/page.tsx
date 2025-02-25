@@ -6,10 +6,15 @@ import {
     Search,
     Edit,
     Calendar,
+    FileText,
+    Users,
+    Plus,
+    Menu,
+    X,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
-import GroupNotes from "../components/groupnotes";
-import Sidebar from "../components/sidebar";
-import SearchBar from "../components/searchbar";
+import Link from "next/link";
 
 type Note = {
     _id: string;
@@ -30,6 +35,187 @@ interface ModalProps {
     title: string;
     children: React.ReactNode;
 }
+
+interface NavbarProps {
+    profile: Profile | null;
+    activeView: "notes" | "groups";
+    setActiveView: (view: "notes" | "groups") => void;
+    onCreateNote: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({
+    profile,
+    activeView,
+    setActiveView,
+    onCreateNote
+}) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    return (
+        <nav className="bg-white shadow-sm sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between h-16">
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0 flex items-center">
+                            <span className="text-xl font-bold text-blue-600">NotesApp</span>
+                        </div>
+                        <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            <button
+                                onClick={() => setActiveView("notes")}
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                                    activeView === "notes"
+                                        ? "border-blue-500 text-gray-900"
+                                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                }`}
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Notes
+                            </button>
+                            <Link href="/groupnotes">
+                            <button
+                                // onClick={() => setActiveView("groups")}
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                                    activeView === "groups"
+                                        ? "border-blue-500 text-gray-900"
+                                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                }`}
+                            >
+                                <Users className="w-4 h-4 mr-2" />
+                                Groups
+                            </button>
+                                    </Link>
+                        </div>
+                    </div>
+                    <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+                        <div className="relative w-64">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search notes..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            />
+                        </div>
+                        <button
+                            onClick={onCreateNote}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            <Plus className="w-4 h-4 mr-1" />
+                            New Note
+                        </button>
+                        <div className="ml-3 relative">
+                            <div className="flex items-center">
+                                <div className="flex flex-col items-start">
+                                    <span className="text-sm font-medium text-gray-700">
+                                        {profile?.name + "_Goggins" || "User"}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        {profile?.notesCreated || 0} notes
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center sm:hidden">
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                        >
+                            {isMenuOpen ? (
+                                <X className="block h-6 w-6" />
+                            ) : (
+                                <Menu className="block h-6 w-6" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile menu */}
+            {isMenuOpen && (
+                <div className="sm:hidden">
+                    <div className="pt-2 pb-3 space-y-1">
+                        <button
+                            onClick={() => {
+                                setActiveView("notes");
+                                setIsMenuOpen(false);
+                            }}
+                            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left ${
+                                activeView === "notes"
+                                    ? "border-blue-500 text-blue-700 bg-blue-50"
+                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                            }`}
+                        >
+                            <FileText className="w-4 h-4 inline mr-2" />
+                            Notes
+                        </button>
+                        <Link href="/groupnotes">
+
+                        <button
+                            // onClick={() => {
+                            //     setActiveView("groups");
+                            //     setIsMenuOpen(false);
+                            // }}
+                            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left ${
+                                activeView === "groups"
+                                    ? "border-blue-500 text-blue-700 bg-blue-50"
+                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                            }`}
+                        >
+                            <Users className="w-4 h-4 inline mr-2" />
+                            Groups
+                        </button>
+                        </Link>
+                    </div>
+                    <div className="pt-4 pb-3 border-t border-gray-200">
+                        <div className="flex items-center px-4">
+                            <div className="flex-shrink-0">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-gray-700">
+                                        {profile?.name || "User"}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        {profile?.notesCreated || 0} notes
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-3 space-y-1">
+                            <div className="px-4 mb-3">
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search notes..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    onCreateNote();
+                                    setIsMenuOpen(false);
+                                }}
+                                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 w-full text-left"
+                            >
+                                <Plus className="w-4 h-4 inline mr-2" />
+                                New Note
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </nav>
+    );
+};
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
@@ -52,6 +238,67 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
                     </div>
                     {children}
                 </div>
+            </div>
+        </div>
+    );
+};
+
+interface NoteCardProps {
+    note: Note;
+    onEdit: (note: Note) => void;
+    onDelete: (id: string) => void;
+}
+
+// Note card component that can be expanded
+const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
+    const [expanded, setExpanded] = useState(false);
+
+    const toggleExpand = () => {
+        setExpanded(!expanded);
+    };
+
+    return (
+        <div 
+            className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col ${expanded ? 'col-span-full' : ''}`}
+        >
+            <div className="flex justify-between items-start mb-3">
+                <h3 
+                    className={`font-semibold text-base sm:text-lg text-gray-800 break-words ${expanded ? '' : 'line-clamp-2'} cursor-pointer`}
+                    onClick={toggleExpand}
+                >
+                    {note.title}
+                </h3>
+                <div className="flex gap-1 sm:gap-2 shrink-0">
+                    <button
+                        onClick={toggleExpand}
+                        className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label={expanded ? "Collapse note" : "Expand note"}
+                    >
+                        {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                    <button
+                        onClick={() => onEdit(note)}
+                        className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => onDelete(note._id)}
+                        className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            </div>
+            <div 
+                className={`text-gray-600 break-words ${expanded ? '' : 'line-clamp-3'} flex-1 cursor-pointer`}
+                onClick={toggleExpand}
+            >
+                {note.content}
+            </div>
+            <div className="flex items-center mt-3 sm:mt-4 text-xs sm:text-sm text-gray-400">
+                <Calendar size={12} className="mr-1" />
+                {new Date(note.createdAt).toLocaleDateString()}
             </div>
         </div>
     );
@@ -168,79 +415,27 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
-            <Sidebar
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            <Navbar
                 profile={profile}
                 activeView={activeView}
                 setActiveView={setActiveView}
                 onCreateNote={() => setIsCreateModalOpen(true)}
             />
 
-            <div className="flex-1 min-w-0 flex flex-col lg:ml-64">
-                    {/* <header className="bg-white shadow-sm p-3 sm:p-4 sticky top-0 z-10">
-                    <div className="max-w-7xl mx-auto w-full">
-                        <div className="relative flex items-center">
-                            <Search
-                                className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                                size={16} // Smaller base size for mobile
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search notes..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 md:py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-200"
-                            />
-                        </div>
-                    </div>
-                </header> */}
-
-                {/* <header> */}
-                {/* <SearchBar
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                />
-                
-                 </header> */}
-
+            <div className="flex-1 min-w-0 flex flex-col">
                 <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
-                    {activeView === "notes" ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                             {filteredNotes.map((note) => (
-                                <div
-                                    key={note._id}
-                                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col"
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <h3 className="font-semibold text-base sm:text-lg text-gray-800 break-words line-clamp-2">
-                                            {note.title}
-                                        </h3>
-                                        <div className="flex gap-1 sm:gap-2 shrink-0">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedNote(note);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                                            >
-                                                <Edit size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteNote(note._id)}
-                                                className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-600 break-words line-clamp-3 flex-1">
-                                        {note.content}
-                                    </p>
-                                    <div className="flex items-center mt-3 sm:mt-4 text-xs sm:text-sm text-gray-400">
-                                        <Calendar size={12} className="mr-1" />
-                                        {new Date(note.createdAt).toLocaleDateString()}
-                                    </div>
-                                </div>
+                                <NoteCard 
+                                    key={note._id} 
+                                    note={note} 
+                                    onEdit={(note: any) => {
+                                        setSelectedNote(note);
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    onDelete={handleDeleteNote}
+                                />
                             ))}
                             {filteredNotes.length === 0 && (
                                 <div className="text-center py-12 col-span-full">
@@ -250,9 +445,6 @@ const Dashboard = () => {
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <GroupNotes />
-                    )}
                 </main>
             </div>
 
