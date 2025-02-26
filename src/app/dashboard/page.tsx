@@ -77,6 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     }`}
                             >
                                 <FileText className="w-4 h-4 mr-2" />
+                                {/* Hello */}
                                 Notes
                             </button>
                             <Link href="/groupnotes">
