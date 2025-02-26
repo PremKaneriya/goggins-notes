@@ -643,6 +643,7 @@ const NoteForm: React.FC<{
                 {isSubmitting && <Loader2 size={18} className="animate-spin" />}
                 {submitButtonText}
             </button>
+            {/* fix for mobile */}
         </form>
     );
 };
