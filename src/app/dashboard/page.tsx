@@ -38,6 +38,7 @@ interface ModalProps {
 
 interface NavbarProps {
     profile: Profile | null;
+    notesForLength: Note[]; // Ensure `notes` is included in the props
     activeView: "notes" | "groups";
     setActiveView: (view: "notes" | "groups") => void;
     onCreateNote: () => void;
@@ -51,9 +52,13 @@ const Navbar: React.FC<NavbarProps> = ({
     setActiveView,
     onCreateNote,
     searchQuery,
-    setSearchQuery
+    setSearchQuery,
+    notesForLength,
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const notesCreated = notesForLength.filter((note: any) => !note.is_deleted).length;
+
 
     return (
         <nav className="bg-white shadow-sm sticky top-0 z-10">
@@ -66,22 +71,20 @@ const Navbar: React.FC<NavbarProps> = ({
                         <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                             <button
                                 onClick={() => setActiveView("notes")}
-                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                                    activeView === "notes"
-                                        ? "border-blue-500 text-gray-900"
-                                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                                }`}
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${activeView === "notes"
+                                    ? "border-blue-500 text-gray-900"
+                                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                    }`}
                             >
                                 <FileText className="w-4 h-4 mr-2" />
                                 Notes
                             </button>
                             <Link href="/groupnotes">
                                 <button
-                                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                                        activeView === "groups"
-                                            ? "border-blue-500 text-gray-900"
-                                            : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                                    }`}
+                                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${activeView === "groups"
+                                        ? "border-blue-500 text-gray-900"
+                                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                                        }`}
                                 >
                                     <Users className="w-4 h-4 mr-2" />
                                     Groups
@@ -116,7 +119,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                         {profile?.name + "_Goggins" || "User"}
                                     </span>
                                     <span className="text-xs text-gray-500">
-                                        {profile?.notesCreated || 0} notes
+                                        {notesCreated || 0} notes
                                     </span>
                                 </div>
                             </div>
@@ -154,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-base"
                             />
                         </div>
-                        
+
                         {/* New note button - made more prominent and touch-friendly */}
                         {/* <button
                             onClick={() => {
@@ -166,29 +169,27 @@ const Navbar: React.FC<NavbarProps> = ({
                             <Plus className="w-5 h-5 mr-2" />
                             New Note
                         </button> */}
-                        
+
                         {/* Navigation items - bigger touch targets */}
                         <button
                             onClick={() => {
                                 setActiveView("notes");
                                 setIsMenuOpen(false);
                             }}
-                            className={`block pl-4 pr-4 py-3 border-l-4 text-base font-medium w-full text-left rounded-r-lg ${
-                                activeView === "notes"
-                                    ? "border-blue-500 text-blue-700 bg-blue-50"
-                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                            }`}
+                            className={`block pl-4 pr-4 py-3 border-l-4 text-base font-medium w-full text-left rounded-r-lg ${activeView === "notes"
+                                ? "border-blue-500 text-blue-700 bg-blue-50"
+                                : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                                }`}
                         >
                             <FileText className="w-5 h-5 inline mr-3" />
                             Notes
                         </button>
                         <Link href="/groupnotes" className="block w-full">
                             <button
-                                className={`block pl-4 pr-4 py-3 border-l-4 text-base font-medium w-full text-left rounded-r-lg ${
-                                    activeView === "groups"
-                                        ? "border-blue-500 text-blue-700 bg-blue-50"
-                                        : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                                }`}
+                                className={`block pl-4 pr-4 py-3 border-l-4 text-base font-medium w-full text-left rounded-r-lg ${activeView === "groups"
+                                    ? "border-blue-500 text-blue-700 bg-blue-50"
+                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                                    }`}
                             >
                                 <Users className="w-5 h-5 inline mr-3" />
                                 Groups
@@ -203,7 +204,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                         {profile?.name + "_Goggins" || "User"}
                                     </span>
                                     <span className="text-sm text-gray-500">
-                                        {profile?.notesCreated || 0} notes
+                                        {notesCreated || 0} notes
                                     </span>
                                 </div>
                             </div>
@@ -256,11 +257,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
     };
 
     return (
-        <div 
+        <div
             className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col ${expanded ? 'col-span-full' : ''}`}
         >
             <div className="flex justify-between items-start mb-3">
-                <h3 
+                <h3
                     className={`font-semibold text-base sm:text-lg text-gray-800 break-words ${expanded ? '' : 'line-clamp-2'} cursor-pointer`}
                     onClick={toggleExpand}
                 >
@@ -288,7 +289,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
                     </button>
                 </div>
             </div>
-            <div 
+            <div
                 className={`text-gray-600 break-words ${expanded ? '' : 'line-clamp-3'} flex-1 cursor-pointer`}
                 onClick={toggleExpand}
             >
@@ -322,7 +323,7 @@ const Dashboard = () => {
                 setShowFab(true);
             }
         }, 1000);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -434,15 +435,16 @@ const Dashboard = () => {
                 onCreateNote={() => setIsCreateModalOpen(true)}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
+                notesForLength={notes}
             />
 
             <div className="flex-1 min-w-0 flex flex-col">
                 <main className="flex-1 p-3 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                         {filteredNotes.map((note) => (
-                            <NoteCard 
-                                key={note._id} 
-                                note={note} 
+                            <NoteCard
+                                key={note._id}
+                                note={note}
                                 onEdit={(note) => {
                                     setSelectedNote(note);
                                     setIsEditModalOpen(true);
