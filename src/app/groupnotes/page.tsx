@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft } from "lucide-react";
+import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 type GroupNote = {
@@ -10,7 +10,7 @@ type GroupNote = {
     createdAt: string;
     groupId: string;
     notes: string[]; // Array of note IDs that belong to this group
-    noteObjects: string[] // Array of note objects that belong to this group
+    noteObjects: Note[] // Array of note objects that belong to this group
 };
 
 type Note = {
@@ -30,6 +30,8 @@ const GroupNotes = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [expandedContents, setExpandedContents] = useState<Record<string, boolean>>({});
+    const [expandAll, setExpandAll] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -126,6 +128,34 @@ const GroupNotes = () => {
         }));
     };
 
+    const toggleContentExpansion = (noteId: string, e: React.MouseEvent) => {
+        // Stop event propagation to prevent toggling the note expansion
+        e.stopPropagation();
+        setExpandedContents(prev => ({
+            ...prev,
+            [noteId]: !prev[noteId]
+        }));
+    };
+
+    // Toggle expand/collapse all groups
+    const toggleExpandAll = () => {
+        const newExpandState = !expandAll;
+        setExpandAll(newExpandState);
+        
+        // Create a new object with all groups either expanded or collapsed
+        const groupExpansionState: Record<string, boolean> = {};
+        groupNotes.forEach(group => {
+            groupExpansionState[group._id] = newExpandState;
+        });
+        
+        setExpandedGroups(groupExpansionState);
+        
+        // If collapsing all, also collapse all contents
+        if (!newExpandState) {
+            setExpandedContents({});
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -147,6 +177,26 @@ const GroupNotes = () => {
                             </Link>
                             <h1 className="text-xl font-bold text-gray-800">Group Notes</h1>
                         </div>
+                        
+                        {/* Expand/Collapse All Button */}
+                        {groupNotes.length > 0 && (
+                            <button
+                                onClick={toggleExpandAll}
+                                className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                {expandAll ? (
+                                    <>
+                                        <EyeOff size={16} className="mr-1" />
+                                        Collapse All
+                                    </>
+                                ) : (
+                                    <>
+                                        <Eye size={16} className="mr-1" />
+                                        Expand All
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>
@@ -156,7 +206,7 @@ const GroupNotes = () => {
                 {groupNotes.length > 0 ? (
                     <div className="grid gap-4">
                         {groupNotes.map(groupNote => (
-                            <div key={groupNote._id} className="bg-white rounded-lg shadow overflow-hidden">
+                            <div key={groupNote._id} className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
                                 {/* Group Header - Clickable to expand */}
                                 <div 
                                     className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
@@ -166,10 +216,15 @@ const GroupNotes = () => {
                                         <h3 className="font-semibold text-gray-800">{groupNote.name}</h3>
                                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{groupNote.description}</p>
                                     </div>
-                                    <ChevronRight 
-                                        size={20} 
-                                        className={`text-gray-500 transition-transform ${expandedGroups[groupNote._id] ? 'rotate-90' : ''}`}
-                                    />
+                                    <div className="flex items-center">
+                                        <span className="text-xs font-medium text-gray-500 mr-2">
+                                            {groupNote.noteObjects.length} Note{groupNote.noteObjects.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <ChevronRight 
+                                            size={20} 
+                                            className={`text-gray-500 transition-transform ${expandedGroups[groupNote._id] ? 'rotate-90' : ''}`}
+                                        />
+                                    </div>
                                 </div>
                                 
                                 {/* Expanded Notes Section */}
@@ -177,10 +232,34 @@ const GroupNotes = () => {
                                     <div className="bg-gray-50 p-4 border-t border-gray-100">
                                         {groupNote.noteObjects && groupNote.noteObjects.length > 0 ? (
                                             <div className="grid gap-3">
-                                                {groupNote.noteObjects.map((note: any) => (
-                                                    <div key={note._id} className="bg-white p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
-                                                        <h4 className="font-medium text-gray-800">{note.title}</h4>
-                                                        <p className="text-sm text-gray-600 mt-1 line-clamp-3">{note.content}</p>
+                                                {groupNote.noteObjects.map((note: Note) => (
+                                                    <div key={note._id} className="bg-white rounded-md shadow-sm overflow-hidden border border-gray-200">
+                                                        {/* Note Header - Now only toggles content expansion */}
+                                                        <div className="p-3 flex justify-between items-center">
+                                                            <h4 className="font-medium text-gray-800">{note.title}</h4>
+                                                            <button 
+                                                                onClick={(e) => toggleContentExpansion(note._id, e)}
+                                                                className="text-xs font-medium text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1 rounded"
+                                                            >
+                                                                {expandedContents[note._id] ? "Hide Content" : "Show Content"}
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        {/* Note Content - Controlled by expandedContents state */}
+                                                        <div className="px-3 pb-3 pt-0">
+                                                            <div className="text-sm text-gray-600 mt-1">
+                                                                {expandedContents[note._id] ? (
+                                                                    <div className="whitespace-pre-wrap bg-gray-50 p-3 rounded-md border border-gray-200 mt-1">
+                                                                        {note.content}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="line-clamp-2 italic">
+                                                                        {note.content.substring(0, 100)}
+                                                                        {note.content.length > 100 ? "..." : ""}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
