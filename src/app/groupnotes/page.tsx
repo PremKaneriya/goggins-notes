@@ -175,7 +175,7 @@ const GroupNotes = () => {
                                 <ArrowLeft size={20} className="mr-1" />
                                 <span className="text-sm font-medium">Back</span>
                             </Link>
-                            <h1 className="text-xl font-bold text-gray-800">Group Notes</h1>
+                            <h1 className="text-xl font-bold text-gray-800">Goggins Note Groups</h1>
                         </div>
                         
                         {/* Expand/Collapse All Button */}
