@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     
     if (avatarFile && avatarFile.size > 0) {
       // Create directory for uploads if it doesn't exist
-      const uploadsDir = path.join(process.cwd(), 'public/avatars');
+      const uploadsDir = path.join("/tmp/uploads");  // Works on many cloud platforms
       
       console.log("Upload directory:", uploadsDir);
       console.log("Directory exists:", existsSync(uploadsDir));

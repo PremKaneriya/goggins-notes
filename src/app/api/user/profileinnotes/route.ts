@@ -34,11 +34,13 @@ export async function GET(request: NextRequest) {
         user: {
           firstName: user.firstName,
           email: user.email,
-          avatar: user.avatar,
+          avatar: user.avatar.startsWith('/avatars/') ? user.avatar : `/avatars/${user.avatar}`,
           phoneNumber: user.phoneNumber,
           totalNotes
         }
-      }, { status: 200 });
+      });
+      
+         
       
     } catch (error: any) {
       console.error("Profile API Error:", error);

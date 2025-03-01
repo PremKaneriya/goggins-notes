@@ -1,25 +1,20 @@
-// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-      remotePatterns: [
-        {
-          protocol: 'http',
-          hostname: 'localhost',
-          port: '3000',
-          pathname: '/avatars/**',
-        },
-      ],
-    },
-    // This is important! It allows Next.js to serve files from the public directory
-    async rewrites() {
-      return [
-        {
-          source: '/avatars/:path*',
-          destination: '/public/avatars/:path*',
-        },
-      ];
-    },
-  };
-  
-  export default nextConfig;
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "goggins.vercel.app",
+        pathname: "/avatars/**", // Ensure it matches the correct image path
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "3000",
+        pathname: "/avatars/**",
+      },
+    ],
+  },
+};
+
+export default nextConfig;

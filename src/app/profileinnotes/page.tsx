@@ -116,13 +116,14 @@ export default function Profile() {
             {hasValidAvatar ? (
               <Image 
                 src={user.avatar}
-                alt={`${user.firstName}'s avatar`}
-                fill
-                className="object-cover"
-                onError={() => {
-                  setAvatarError(true);
-                }}
+                alt="User Avatar"
+                width={64}
+                height={64}
+                className="rounded-full object-cover"
+                onError={() => setAvatarError(true)}
               />
+
+
             ) : (
               <div className="flex items-center justify-center w-full h-full">
                 <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
