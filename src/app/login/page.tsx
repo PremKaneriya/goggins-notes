@@ -5,17 +5,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { type } from "os";
-import {
-  div,
-  h1,
-  form,
-  label,
-  input,
-  a,
-  button,
-  p,
-} from "framer-motion/client";
 import Link from "next/link";
 
 export default function Login() {
