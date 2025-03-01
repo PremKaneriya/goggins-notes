@@ -3,6 +3,7 @@ import mongoose, { model, models } from "mongoose";
 export interface MyUser {
   _id: mongoose.Types.ObjectId;
   firstName: string;
+  avatar: string;
   phoneNumber: number;
   email: string;
   password: string;
@@ -11,6 +12,11 @@ export interface MyUser {
 }
 
 const userSchema = new mongoose.Schema({
+  avatar: {
+    type: String,
+    required: true,
+    unique: true
+  },
   phoneNumber: {
       type: Number,
       required: true,

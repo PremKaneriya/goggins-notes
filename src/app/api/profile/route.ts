@@ -22,6 +22,10 @@ export async function GET(
 
         return NextResponse.json({
             name: user.firstName,
+            avatar: user.avatar,
+            email: user.email,
+            id: user._id,
+            phoneNumber: user.phoneNumber,
             totalNotesCreated: notes.length
         }, { status: 200 });
 

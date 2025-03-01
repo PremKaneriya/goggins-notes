@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import {Trash2,Loader2,Search,Edit,Calendar,FileText,Users,Plus,Menu,X,ArrowLeft,Check,LogOut,} from "lucide-react";
+import { Trash2, Loader2, Search, Edit, Calendar, FileText, Users, Plus, Menu, X, ArrowLeft, Check, LogOut, } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { CgProfile } from "react-icons/cg";
 
 type Note = {
   _id: string;
@@ -48,6 +49,7 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const router = useRouter();
   return (
     <nav className="bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4">
@@ -59,22 +61,20 @@ const Navbar: React.FC<NavbarProps> = ({
             <div className="hidden md:ml-10 md:flex md:space-x-8">
               <button
                 onClick={() => setActiveView("notes")}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeView === "notes"
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${activeView === "notes"
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Notes
               </button>
               <Link href="/groupnotes">
                 <button
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    activeView === "groups"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${activeView === "groups"
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Groups
@@ -102,24 +102,18 @@ const Navbar: React.FC<NavbarProps> = ({
               <Plus className="w-4 h-4 mr-2" />
               New Note
             </button>
-            <div className="ml-3 relative flex items-center p-1 pl-3 pr-4 rounded-full bg-gray-50">
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium text-gray-700">
-                  {profile?.name + "_Goggins" || "User"}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {notesCount || 0} notes
-                </span>
+            <Link href="/profileinnotes" className="flex flex-col items-start">
+              <div className="ml-3 relative flex items-center p-1 pl-3 pr-4 rounded-lg bg-gray-50 border border-gray-300">
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium text-gray-700 ">
+                    {profile?.name + "_Goggins" || "User"}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {notesCount || 0} notes
+                  </span>
+                </div>
               </div>
-            </div>
-            {/* Add Logout Button for Desktop */}
-            <button
-              onClick={onLogout}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-sm transition-all"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </button>
+            </Link>
           </div>
           <div className="flex items-center md:hidden">
             <button
@@ -160,50 +154,42 @@ const Navbar: React.FC<NavbarProps> = ({
                 setActiveView("notes");
                 setIsMenuOpen(false);
               }}
-              className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${
-                activeView === "notes"
+              className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${activeView === "notes"
                   ? "bg-blue-50 text-blue-700"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+                }`}
             >
               <FileText className="w-5 h-5 mr-3" />
               Notes
             </button>
             <Link href="/groupnotes" className="block w-full">
               <button
-                className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${
-                  activeView === "groups"
+                className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${activeView === "groups"
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <Users className="w-5 h-5 mr-3" />
                 Groups
               </button>
             </Link>
           </div>
+          
           <div className="pt-2 pb-3 border-t border-gray-200 px-4">
+
+
+            <Link href="/profileinnotes" className="flex flex-col items-start bg-gray-50 border border-gray-300 rounded-lg">
             <div className="flex items-center py-2">
               <div className="flex flex-col">
-                <span className="text-base font-medium text-gray-700">
+                <span className="text-base font-medium text-gray-700 ml-4">
                   {profile?.name + "_Goggins" || "User"}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 ml-4">
                   {notesCount || 0} notes
                 </span>
               </div>
             </div>
-            {/* Add Logout Button for Mobile */}
-            <button
-              onClick={() => {
-                onLogout();
-                setIsMenuOpen(false);
-              }}
-              className="flex items-center w-full px-4 py-3 mt-2 text-base font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              Logout
-            </button>
+            </Link>
           </div>
         </div>
       )}
@@ -246,12 +232,12 @@ interface NoteCardProps {
   setFullPageNote: (note: Note | null) => void; // New prop for setting full-page note
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ 
-  note, 
-  onEdit, 
-  onDelete, 
-  isFullWidth, 
-  setFullPageNote 
+const NoteCard: React.FC<NoteCardProps> = ({
+  note,
+  onEdit,
+  onDelete,
+  isFullWidth,
+  setFullPageNote
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -261,48 +247,46 @@ const NoteCard: React.FC<NoteCardProps> = ({
 
   // Format date in a more readable way
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
-<div
-  className="rounded-lg border border-gray-300 bg-white hover:shadow-lg transition-shadow duration-200 
+    <div
+      className="rounded-lg border border-gray-300 bg-white hover:shadow-lg transition-shadow duration-200 
     flex flex-col p-4 w-full h-auto"
->
-  {note.title && (
-    <div className="mb-2">
-      <h3
-        className={`text-base font-medium text-gray-800 ${
-          expanded ? "" : "line-clamp-1"
-        } cursor-pointer`}
+    >
+      {note.title && (
+        <div className="mb-2">
+          <h3
+            className={`text-base font-medium text-gray-800 ${expanded ? "" : "line-clamp-1"
+              } cursor-pointer`}
+            onClick={() => setFullPageNote(note)}
+          >
+            {note.title}
+          </h3>
+        </div>
+      )}
+
+      <div
+        className={`text-gray-700 text-sm whitespace-pre-line break-words ${expanded ? "line-clamp-none" : "line-clamp-6"
+          } cursor-pointer mb-2`}
         onClick={() => setFullPageNote(note)}
       >
-        {note.title}
-      </h3>
+        {note.content}
+      </div>
+
+      <div className="flex justify-between items-center mt-auto pt-2 text-xs text-gray-400">
+        <div className="flex items-center">
+          <Calendar size={12} className="mr-1" />
+          {formatDate(note.createdAt)}
+        </div>
+      </div>
     </div>
-  )}
-  
-  <div
-    className={`text-gray-700 text-sm whitespace-pre-line break-words ${
-      expanded ? "line-clamp-none" : "line-clamp-6"
-    } cursor-pointer mb-2`}
-    onClick={() => setFullPageNote(note)}
-  >
-    {note.content}
-  </div>
-  
-  <div className="flex justify-between items-center mt-auto pt-2 text-xs text-gray-400">
-    <div className="flex items-center">
-      <Calendar size={12} className="mr-1" />
-      {formatDate(note.createdAt)}
-    </div>
-  </div>
-</div>
   );
 };
 
@@ -320,10 +304,10 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
   const [content, setContent] = useState(note.content);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  
+
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   useEffect(() => {
     // Reset states when note changes
     setTitle(note.title);
@@ -331,7 +315,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     setHasChanges(false);
     setIsEditing(false);
   }, [note]);
-  
+
   useEffect(() => {
     // Focus on title input when entering edit mode
     if (isEditing && titleInputRef.current) {
@@ -346,15 +330,15 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
       contentTextareaRef.current.style.height = contentTextareaRef.current.scrollHeight + "px";
     }
   }, [content, isEditing]);
-  
+
   // Check for unsaved changes
   useEffect(() => {
     setHasChanges(title !== note.title || content !== note.content);
   }, [title, content, note]);
-  
+
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) return;
-    
+
     try {
       setIsSaving(true);
       await onEdit(note._id, title, content);
@@ -366,7 +350,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
       setIsSaving(false);
     }
   };
-  
+
   const handleClose = () => {
     if (hasChanges) {
       // Could add a confirmation dialog here
@@ -376,11 +360,11 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     }
     onClose();
   };
-  
+
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -407,26 +391,26 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
           onClose();
         }
       }
-      
+
       // Ctrl+Enter or Cmd+Enter to save
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && isEditing) {
         handleSave();
       }
-      
+
       // E key to edit when not already editing
-      if (e.key === 'e' && !isEditing && 
-          !(e.target instanceof HTMLInputElement) && 
-          !(e.target instanceof HTMLTextAreaElement)) {
+      if (e.key === 'e' && !isEditing &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)) {
         setIsEditing(true);
         e.preventDefault();
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
-    
+
     // Prevent scrolling of background content
     document.body.style.overflow = 'hidden';
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
@@ -445,7 +429,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
             >
               <ArrowLeft size={20} />
             </button>
-            
+
             {isEditing ? (
               <input
                 ref={titleInputRef}
@@ -456,7 +440,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
                 placeholder="Note title"
               />
             ) : (
-              <h2 
+              <h2
                 className="text-xl font-semibold text-gray-800 cursor-text"
                 onClick={() => setIsEditing(true)}
               >
@@ -464,7 +448,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
               </h2>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
@@ -514,32 +498,32 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
         </div>
 
         {/* fix notes */}
-        
+
         <div className="flex-1 overflow-y-auto p-6">
-            {isEditing ? (
-              <textarea
-                ref={contentTextareaRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-lg leading-relaxed"
-                placeholder="Note content"
-              />
-            ) : (
-              <div 
-                className="whitespace-pre-wrap font-sans text-gray-800 text-lg leading-relaxed cursor-text"
-                onClick={() => setIsEditing(true)}
-              >
-                {content}
-              </div>
-            )}
+          {isEditing ? (
+            <textarea
+              ref={contentTextareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-lg leading-relaxed"
+              placeholder="Note content"
+            />
+          ) : (
+            <div
+              className="whitespace-pre-wrap font-sans text-gray-800 text-lg leading-relaxed cursor-text"
+              onClick={() => setIsEditing(true)}
+            >
+              {content}
+            </div>
+          )}
         </div>
-        
+
         <div className="p-4 border-t text-sm text-gray-500 flex items-center justify-between">
           <div className="flex items-center">
             <Calendar size={14} className="mr-2" />
             Last edited: {formatDate(note.createdAt)}
           </div>
-          
+
           {isEditing && (
             <div className="text-xs text-gray-400">
               Press Ctrl+Enter to save • Esc to cancel
@@ -624,7 +608,7 @@ const Dashboard = () => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      
+
       if (!res.ok) throw new Error("Failed to logout");
       toast.success("Logged out successfully!");
       router.push("/login");
@@ -659,7 +643,7 @@ const Dashboard = () => {
 
   const handleEditNote = async (noteId: string, title: string, content: string) => {
     if (!title.trim() || !content.trim()) return;
-    
+
     try {
       const res = await fetch("/api/auth/notes", {
         method: "PUT",
@@ -667,26 +651,26 @@ const Dashboard = () => {
         credentials: "include",
         body: JSON.stringify({ noteId, title, content }),
       });
-      
+
       if (!res.ok) throw new Error("Failed to update note");
-      
+
       // Update the notes state
       setNotes(
         notes.map((n) =>
           n._id === noteId ? { ...n, title, content } : n
         )
       );
-      
+
       // If this was triggered from the modal, close it
       if (selectedNote && selectedNote._id === noteId) {
         setIsEditModalOpen(false);
       }
-      
+
       // If this was triggered from full-page view, update the fullPageNote
       if (fullPageNote && fullPageNote._id === noteId) {
         setFullPageNote({ ...fullPageNote, title, content });
       }
-      
+
     } catch (err) {
       console.error(err);
     }
@@ -733,70 +717,70 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-    <Navbar
-      profile={profile}
-      activeView={activeView}
-      setActiveView={setActiveView}
-      onCreateNote={() => setIsCreateModalOpen(true)}
-      searchQuery={searchQuery}
-      setSearchQuery={setSearchQuery}
-      notesCount={notes.length}
-      onLogout={() => setIsLogoutDialogOpen(true)} // Add new prop to trigger logout dialog
-    />
+      <Navbar
+        profile={profile}
+        activeView={activeView}
+        setActiveView={setActiveView}
+        onCreateNote={() => setIsCreateModalOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        notesCount={notes.length}
+        onLogout={() => setIsLogoutDialogOpen(true)} // Add new prop to trigger logout dialog
+      />
 
-    <div className="flex-1 min-w-0 flex flex-col">
-      <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
-        {filteredNotes.map((note) => (
-            <NoteCard
-              key={note._id}
-              note={note}
-              onEdit={(note) => {
-                setSelectedNote(note);
-                setIsEditModalOpen(true);
-              }}
-              onDelete={handleDeleteNote}
-              isFullWidth={!!expandedNotes[note._id]}
-              toggleWidth={() => toggleNoteWidth(note._id)}
-              setFullPageNote={setFullPageNote}
-            />  
-          ))}
-          {filteredNotes.length === 0 && (
-            <div className="text-center py-16 col-span-full bg-white rounded-xl border border-gray-100 shadow-sm">
-              <div className="flex flex-col items-center">
-                <FileText className="w-12 h-12 text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-800 mb-2">No notes found</h3>
-                <p className="text-gray-500 mb-6">
-                  {searchQuery
-                    ? `No notes matching "${searchQuery}"`
-                    : "Create your first note to get started"}
-                </p>
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {searchQuery ? "Create new note" : "Create your first note"}
-                </button>
+      <div className="flex-1 min-w-0 flex flex-col">
+        <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+          <div className="mb-6">
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
+            {filteredNotes.map((note) => (
+              <NoteCard
+                key={note._id}
+                note={note}
+                onEdit={(note) => {
+                  setSelectedNote(note);
+                  setIsEditModalOpen(true);
+                }}
+                onDelete={handleDeleteNote}
+                isFullWidth={!!expandedNotes[note._id]}
+                toggleWidth={() => toggleNoteWidth(note._id)}
+                setFullPageNote={setFullPageNote}
+              />
+            ))}
+            {filteredNotes.length === 0 && (
+              <div className="text-center py-16 col-span-full bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex flex-col items-center">
+                  <FileText className="w-12 h-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">No notes found</h3>
+                  <p className="text-gray-500 mb-6">
+                    {searchQuery
+                      ? `No notes matching "${searchQuery}"`
+                      : "Create your first note to get started"}
+                  </p>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {searchQuery ? "Create new note" : "Create your first note"}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+            )}
+          </div>
+        </main>
+      </div>
 
-    {showFab && (
-      <button
-        onClick={() => setIsCreateModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg flex items-center justify-center md:hidden z-20 hover:from-blue-700 hover:to-indigo-700 active:scale-95 transition-all"
-        aria-label="Create new note"
-      >
-        <Plus size={24} />
-      </button>
-    )}
+      {showFab && (
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg flex items-center justify-center md:hidden z-20 hover:from-blue-700 hover:to-indigo-700 active:scale-95 transition-all"
+          aria-label="Create new note"
+        >
+          <Plus size={24} />
+        </button>
+      )}
 
       {/* Modal for creating notes */}
       <Modal
@@ -827,40 +811,40 @@ const Dashboard = () => {
           submitButtonText="Save Changes"
         />
       </Modal>
-    {/* Logout confirmation dialog */}
-    <Modal
-      isOpen={isLogoutDialogOpen}
-      onClose={() => setIsLogoutDialogOpen(false)}
-      title="Confirm Logout"
-    >
-      <div className="p-4">
-        <p className="text-gray-700 mb-6">Are you sure you want to logout?</p>
-        <div className="flex justify-end space-x-4">
-          <button 
-            onClick={() => setIsLogoutDialogOpen(false)}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Logout
-          </button>
+      {/* Logout confirmation dialog */}
+      <Modal
+        isOpen={isLogoutDialogOpen}
+        onClose={() => setIsLogoutDialogOpen(false)}
+        title="Confirm Logout"
+      >
+        <div className="p-4">
+          <p className="text-gray-700 mb-6">Are you sure you want to logout?</p>
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={() => setIsLogoutDialogOpen(false)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
 
-    {/* Add the FullPageNote component when a note is selected */}
-    {fullPageNote && (
+      {/* Add the FullPageNote component when a note is selected */}
+      {fullPageNote && (
         <FullPageNote
           note={fullPageNote}
           onClose={() => setFullPageNote(null)}
           onEdit={handleEditNote}
           onDelete={handleDeleteNote}
         />
-    )}
+      )}
 
     </div>
   );
@@ -954,9 +938,9 @@ const NoteForm: React.FC<{
           onBlur={() => handleBlur("title")}
           className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all
               ${errors.title && touched.title
-                ? "border-red-400 bg-red-50"
-                : "border-gray-200"
-              }`}
+              ? "border-red-400 bg-red-50"
+              : "border-gray-200"
+            }`}
           placeholder="Enter note title..."
         />
         {errors.title && touched.title && (
@@ -985,9 +969,9 @@ const NoteForm: React.FC<{
           onBlur={() => handleBlur("content")}
           className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-48 text-base resize-none transition-all
               ${errors.content && touched.content
-                ? "border-red-400 bg-red-50"
-                : "border-gray-200"
-              }`}
+              ? "border-red-400 bg-red-50"
+              : "border-gray-200"
+            }`}
           placeholder="Enter note content..."
         />
         {errors.content && touched.content && (
