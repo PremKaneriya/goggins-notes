@@ -270,36 +270,39 @@ const NoteCard: React.FC<NoteCardProps> = ({
   };
 
   return (
-    <div
-      className={`bg-white rounded-xl border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow transition-all duration-200 p-5 flex flex-col ${
-        isFullWidth ? "col-span-full" : ""
-      } h-[200px]`} // Added fixed height here
-    >
-      <div className="flex justify-between items-start mb-3">
-        <h3
-          className={`font-medium text-lg text-gray-800 break-words ${
-            expanded ? "" : "line-clamp-1"
-          } cursor-pointer hover:text-blue-600 transition-colors`}
-          onClick={() => setFullPageNote(note)}
-        >
-          {note.title}
-        </h3>
-        <div className="flex gap-1 shrink-0 ml-2">
-        </div>
-      </div>
-      <div
-        className={`text-gray-600 break-words prose prose-sm max-w-none ${
-          expanded ? "line-clamp-none" : "line-clamp-3"
-        } flex-1 cursor-pointer overflow-hidden`} // Added overflow-hidden
+<div
+  className="rounded-lg border border-gray-300 bg-white hover:shadow-lg transition-shadow duration-200 
+    flex flex-col p-4 w-full h-auto"
+>
+  {note.title && (
+    <div className="mb-2">
+      <h3
+        className={`text-base font-medium text-gray-800 ${
+          expanded ? "" : "line-clamp-1"
+        } cursor-pointer`}
         onClick={() => setFullPageNote(note)}
       >
-        {note.content}
-      </div>
-      <div className="flex items-center mt-auto text-xs text-gray-400 pt-3 border-t border-gray-50">
-        <Calendar size={12} className="mr-1" />
-        {formatDate(note.createdAt)}
-      </div>
+        {note.title}
+      </h3>
     </div>
+  )}
+  
+  <div
+    className={`text-gray-700 text-sm whitespace-pre-line break-words ${
+      expanded ? "line-clamp-none" : "line-clamp-6"
+    } cursor-pointer mb-2`}
+    onClick={() => setFullPageNote(note)}
+  >
+    {note.content}
+  </div>
+  
+  <div className="flex justify-between items-center mt-auto pt-2 text-xs text-gray-400">
+    <div className="flex items-center">
+      <Calendar size={12} className="mr-1" />
+      {formatDate(note.createdAt)}
+    </div>
+  </div>
+</div>
   );
 };
 
@@ -744,13 +747,10 @@ const Dashboard = () => {
     <div className="flex-1 min-w-0 flex flex-col">
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
         <div className="mb-6">
-          <p className="text-gray-500 ml-3 text-sm">
-           {filteredNotes.length === 1 ? "1 note" : `${filteredNotes.length} notes`} {searchQuery && `matching "${searchQuery}"`} 
-          </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredNotes.map((note) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
+        {filteredNotes.map((note) => (
             <NoteCard
               key={note._id}
               note={note}
