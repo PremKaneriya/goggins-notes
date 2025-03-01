@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    domains: ['goggins.vercel.app'],
-  },
-};
-
-export default nextConfig;
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'res.cloudinary.com',
+        },
+      ],
+    },
+    // Your other Next.js configuration options...
+  };
+  
+  export default nextConfig;
+  

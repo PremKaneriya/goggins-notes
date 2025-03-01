@@ -2,51 +2,16 @@ import connectDB from "@/dbConnect/dbConnect";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import User from "../../../../../models/User.Model";
-import path from "path";
-import { mkdir, writeFile } from 'fs/promises';
-import { existsSync } from "fs";
+import { v2 as cloudinary } from 'cloudinary';
 
 
 connectDB();
 
-// export async function POST(request: NextRequest) {
-//   try {
-//     const reqBody = await request.json();
-
-//     const { email, password, phoneNumber, firstName, avatar } = reqBody;
-
-//     const user = await User.findOne({ email }).select("+password");
-
-//     if (user) {
-//       return NextResponse.json(
-//         { error: "User already exists" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const salt = await bcryptjs.genSalt(10);
-//     const hashedPassword = await bcryptjs.hash(password, salt);
-
-//     const newUser = new User({
-//       email,
-//       password: hashedPassword,
-//       phoneNumber,
-//       firstName,
-//       avatar
-//     });
-
-//     console.log(newUser);
-
-//     const savedUser = await newUser.save();
-
-//     return NextResponse.json(
-//       { message: "User created successfully", info: savedUser },
-//       { status: 201 }
-//     );
-//   } catch (error: any) {
-//     return NextResponse.json({ error: error.message }, { status: 500 });
-//   }
-// }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,38 +29,26 @@ export async function POST(request: NextRequest) {
     let avatar = "";
     
     if (avatarFile && avatarFile.size > 0) {
-      // Create directory for uploads if it doesn't exist
-      const uploadsDir = path.join("/tmp/uploads");  // Works on many cloud platforms
-      
-      console.log("Upload directory:", uploadsDir);
-      console.log("Directory exists:", existsSync(uploadsDir));
-      
-      try {
-        await mkdir(uploadsDir, { recursive: true });
-        console.log("Directory created/verified");
-      } catch (dirError) {
-        console.error("Error creating directory:", dirError);
-      }
-      
-      // Generate unique filename
-      const filename = `${Date.now()}_${avatarFile.name.replace(/\s/g, '_')}`;
-      const filepath = path.join(uploadsDir, filename);
-      
-      console.log("File will be saved to:", filepath);
-      
-      // Convert File object to Buffer and save
+      // Convert File object to Buffer
       const bytes = await avatarFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
       
+      // Create a temp file path for Cloudinary upload
+      const dataURI = `data:${avatarFile.type};base64,${buffer.toString('base64')}`;
+      
+      // Upload to Cloudinary
       try {
-        await writeFile(filepath, buffer);
-        console.log("File written successfully");
+        const uploadResult = await cloudinary.uploader.upload(dataURI, {
+          folder: 'goggins-avatars',
+          resource_type: 'auto'
+        });
         
-        // Store path relative to public directory
-        avatar = `/avatars/${filename}`;
-        console.log("Avatar path stored as:", avatar);
-      } catch (fileError) {
-        console.error("Error writing file:", fileError);
+        // Store the secure URL from Cloudinary
+        avatar = uploadResult.secure_url;
+        console.log("Avatar uploaded to Cloudinary:", avatar);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary upload error:", cloudinaryError);
+        throw new Error("Failed to upload avatar");
       }
     } else {
       console.log("No avatar file provided or empty file");

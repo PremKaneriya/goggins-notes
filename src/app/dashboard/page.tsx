@@ -1,10 +1,9 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Trash2, Loader2, Search, Edit, Calendar, FileText, Users, Plus, Menu, X, ArrowLeft, Check, LogOut, } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { CgProfile } from "react-icons/cg";
 
 type Note = {
   _id: string;
@@ -336,9 +335,9 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     setHasChanges(title !== note.title || content !== note.content);
   }, [title, content, note]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!title.trim() || !content.trim()) return;
-
+  
     try {
       setIsSaving(true);
       await onEdit(note._id, title, content);
@@ -349,7 +348,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [title, content, note._id, onEdit, setIsEditing, setHasChanges]);
 
   const handleClose = () => {
     if (hasChanges) {
@@ -415,7 +414,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isEditing, hasChanges, note, onClose]);
+  }, [isEditing, hasChanges, note, onClose, handleSave]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">

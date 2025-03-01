@@ -63,6 +63,18 @@ export default function Signup() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
+      // Validate file size (e.g., limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image too large. Please select an image under 5MB.");
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select a valid image file.");
+        return;
+      }
+      
       setAvatar(file);
       
       // Create a preview URL for the selected image
@@ -89,6 +101,11 @@ export default function Signup() {
     setError("");
 
     try {
+      // Display uploading message if avatar is being uploaded
+      if (avatar) {
+        toast.loading("Uploading profile picture...");
+      }
+      
       // Combine the JSON and file data using FormData
       const formData = new FormData();
       
@@ -107,6 +124,9 @@ export default function Signup() {
         method: "POST",
         body: formData,
       });
+
+      // Dismiss the loading toast
+      toast.dismiss();
 
       // Try to parse JSON response
       let data;
@@ -183,15 +203,14 @@ export default function Signup() {
               Profile Picture
             </label>
             <div className="flex flex-col items-center">
-              <div 
-                onClick={triggerFileInput}
-                className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors bg-gray-50 flex items-center justify-center mb-2"
+            <div onClick={triggerFileInput}
+                  className="relative overflow-hidden border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors bg-gray-50 flex items-center justify-center mb-2"
               >
                 {avatarPreview ? (
                   <Image 
                     src={avatarPreview} 
                     alt="Avatar preview" 
-                    fill 
+                    fill
                     className="object-cover"
                   />
                 ) : (
@@ -216,6 +235,11 @@ export default function Signup() {
               >
                 {avatarPreview ? "Change avatar" : "Upload avatar"}
               </button>
+              {avatar && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {avatar.name} ({Math.round(avatar.size / 1024)}KB)
+                </p>
+              )}
             </div>
           </div>
 

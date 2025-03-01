@@ -111,29 +111,26 @@ export default function Profile() {
         </div>
 
         {/* Profile header */}
-        <div className="flex items-center mb-8">
-          <div className="relative h-16 w-16 rounded-full overflow-hidden bg-gray-100 mr-4">
+              <div className="flex items-center mb-8">
+              <div 
+                  className="relative w-20 h-20 border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors bg-gray-50 rounded-full overflow-hidden"
+          >
             {hasValidAvatar ? (
               <Image 
-                src={user.avatar}
-                alt="User Avatar"
-                width={64}
-                height={64}
-                className="rounded-full object-cover"
-                onError={() => setAvatarError(true)}
+                src={user.avatar} 
+                alt="Avatar preview" 
+                fill
+                className="object-cover"
               />
-
-
             ) : (
-              <div className="flex items-center justify-center w-full h-full">
-                <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
-              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
             )}
           </div>
-          
           <div>
-            <h1 className="text-xl font-medium text-gray-900">{user.firstName}</h1>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <h1 className="text-xl ml-4 font-medium text-gray-900">{user.firstName}</h1>
+            <p className="text-sm ml-4 text-gray-500">{user.email}</p>
           </div>
         </div>
         
