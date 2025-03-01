@@ -504,6 +504,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
             )}
           </div>
         </div>
+
+        {/* fix notes */}
         
         <div className="flex-1 overflow-y-auto p-6">
             {isEditing ? (
