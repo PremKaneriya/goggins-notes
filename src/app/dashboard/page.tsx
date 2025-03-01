@@ -1,25 +1,9 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Trash2,
-  Loader2,
-  Search,
-  Edit,
-  Calendar,
-  FileText,
-  Users,
-  Plus,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Maximize2,
-  Minimize2,
-  ArrowLeft,
-  Maximize,
-  Check,
-} from "lucide-react";
+import {Trash2,Loader2,Search,Edit,Calendar,FileText,Users,Plus,Menu,X,ArrowLeft,Check,LogOut,} from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 type Note = {
   _id: string;
@@ -49,6 +33,7 @@ interface NavbarProps {
   onCreateNote: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  onLogout: () => void; // Add this new prop
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -59,6 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   setSearchQuery,
   notesCount,
+  onLogout, // Make sure to use the onLogout prop from Dashboard
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -126,6 +112,14 @@ const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </div>
             </div>
+            {/* Add Logout Button for Desktop */}
+            <button
+              onClick={onLogout}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-sm transition-all"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </button>
           </div>
           <div className="flex items-center md:hidden">
             <button
@@ -199,6 +193,17 @@ const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </div>
             </div>
+            {/* Add Logout Button for Mobile */}
+            <button
+              onClick={() => {
+                onLogout();
+                setIsMenuOpen(false);
+              }}
+              className="flex items-center w-full px-4 py-3 mt-2 text-base font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Logout
+            </button>
           </div>
         </div>
       )}
@@ -555,7 +560,11 @@ const Dashboard = () => {
   const [activeView, setActiveView] = useState<"notes" | "groups">("notes");
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [showFab, setShowFab] = useState(false);
-  const [fullPageNote, setFullPageNote] = useState<Note | null>(null); // New state for full-page note
+  const [fullPageNote, setFullPageNote] = useState<Note | null>(null);
+  // Add new state for logout confirmation
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     // Show FAB after initial load, and only on small screens
@@ -603,6 +612,26 @@ const Dashboard = () => {
     fetchNotes();
     handleGetProfile();
   }, []);
+
+  // Add new function to handle logout
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      
+      if (!res.ok) throw new Error("Failed to logout");
+      toast.success("Logged out successfully!");
+      router.push("/login");
+
+      // The API will handle redirecting to the login page
+      // No need to do anything else here as the redirect happens server-side
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   const handleCreateNote = async (title: string, content: string) => {
     if (!title.trim() || !content.trim()) return;
@@ -709,6 +738,7 @@ const Dashboard = () => {
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
       notesCount={notes.length}
+      onLogout={() => setIsLogoutDialogOpen(true)} // Add new prop to trigger logout dialog
     />
 
     <div className="flex-1 min-w-0 flex flex-col">
@@ -731,8 +761,8 @@ const Dashboard = () => {
               onDelete={handleDeleteNote}
               isFullWidth={!!expandedNotes[note._id]}
               toggleWidth={() => toggleNoteWidth(note._id)}
-              setFullPageNote={setFullPageNote} // Pass the new function as prop
-            />
+              setFullPageNote={setFullPageNote}
+            />  
           ))}
           {filteredNotes.length === 0 && (
             <div className="text-center py-16 col-span-full bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -797,6 +827,30 @@ const Dashboard = () => {
           submitButtonText="Save Changes"
         />
       </Modal>
+    {/* Logout confirmation dialog */}
+    <Modal
+      isOpen={isLogoutDialogOpen}
+      onClose={() => setIsLogoutDialogOpen(false)}
+      title="Confirm Logout"
+    >
+      <div className="p-4">
+        <p className="text-gray-700 mb-6">Are you sure you want to logout?</p>
+        <div className="flex justify-end space-x-4">
+          <button 
+            onClick={() => setIsLogoutDialogOpen(false)}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </Modal>
 
     {/* Add the FullPageNote component when a note is selected */}
     {fullPageNote && (
@@ -806,7 +860,8 @@ const Dashboard = () => {
           onEdit={handleEditNote}
           onDelete={handleDeleteNote}
         />
-      )}
+    )}
+
     </div>
   );
 };

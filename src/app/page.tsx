@@ -1,21 +1,34 @@
 /* eslint-disable react/no-unescaped-entities */
-"use client"
-import React, { useEffect } from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if token exists in localStorage
-    const token = localStorage.getItem("tab");
-    
-    // If token exists, redirect to dashboard
-    if (token) {
-      router.push("/dashboard");
-    }
-  }, [router]); // Add router to dependency array
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", {
+          method: "GET",
+          credentials: "include", // Ensures cookies are sent
+        });
+
+        const data = await res.json();
+        if (data.token) {
+          setToken(data.token);
+          router.push("/dashboard"); // Redirect if token exists
+        }
+      } catch (error) {
+        console.error("Error fetching token:", error);
+      }
+    };
+
+    fetchToken();
+  }, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-900 px-4 sm:px-0">
@@ -24,11 +37,11 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-center">
             Welcome to <span className="text-blue-600">Goggins</span> Notes
           </h1>
-          
+
           <p className="text-sm text-gray-600 text-center">
             Your private space to express your thoughts.
           </p>
-          
+
           <div className="w-full space-y-4 mt-4">
             <Link
               href="/signup"
@@ -36,7 +49,7 @@ export default function Home() {
             >
               Sign Up
             </Link>
-            
+
             <Link
               href="/login"
               className="block w-full py-2 px-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition duration-200 text-center"

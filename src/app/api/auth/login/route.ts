@@ -39,10 +39,13 @@ export async function POST(request: NextRequest) {
     );
 
     // Consider relaxing SameSite and adding Secure conditionally
-    response.headers.set(
-      "Set-Cookie",
-      `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax;`
-    );
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure only in production
+      maxAge: 3600,
+      path: "/",
+      sameSite: "lax", // ✅ Fix: Use lowercase "lax"
+    });
 
     return response;
   } catch (error: any) {
