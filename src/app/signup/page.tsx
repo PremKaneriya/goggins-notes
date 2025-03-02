@@ -20,7 +20,29 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState<"empty" | "weak" | "medium" | "strong">("empty");
+  const [token, setToken] = useState<string | null>(null);
   
+    useEffect(() => {
+      const fetchToken = async () => {
+        try {
+          const res = await fetch("/api/auth/token", {
+            method: "GET",
+            credentials: "include", // Ensures cookies are sent
+          });
+  
+          const data = await res.json();
+          if (data.token) {
+            setToken(data.token);
+            router.push("/dashboard"); // Redirect if token exists
+          }
+        } catch (error) {
+          console.error("Error fetching token:", error);
+        }
+      };
+  
+      fetchToken();
+    }, [router]);
+    
   const checkPasswordStrength = (password: string) => {
     if (!password) {
       return "empty";

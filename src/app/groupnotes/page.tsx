@@ -268,9 +268,12 @@ const GroupNotes = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="animate-spin" size={24} />
-            </div>
+                <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+                    <p className="text-gray-500">Loading your group notes...</p>
+                </div>
+                </div>
         );
     }
 
@@ -285,7 +288,7 @@ const GroupNotes = () => {
                                 <ArrowLeft size={20} className="mr-1" />
                                 <span className="text-sm font-medium">Back</span>
                             </Link>
-                            <h1 className="text-xl font-bold text-gray-800">Goggins Note Groups</h1>
+                            <h1 className="text-xl font-bold text-gray-800">NoteBook Groups</h1> 
                         </div>
                         
                         {/* Expand/Collapse All Button */}

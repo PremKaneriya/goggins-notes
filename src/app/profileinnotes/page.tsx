@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 // Define a type for the user data
 type UserProfile = {
@@ -70,8 +71,11 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="h-6 w-6 border-t-2 border-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+          <p className="text-gray-500">Loading your profile...</p>
+        </div>
       </div>
     );
   }
@@ -123,9 +127,16 @@ export default function Profile() {
                 className="object-cover"
               />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <div className="w-20 h-20 bg-gray-200 rounded-full">
+                <div className="flex items-center justify-center w-full h-full bg-gray-400 rounded-full">
+                  <Image
+                  src={`https://www.svgrepo.com/show/382106/male-avatar-boy-face-man-user-9.svg`}
+                  alt="Avatar preview" 
+                  fill
+                  className="object-cover"
+                />
+                </div>
+              </div>
             )}
           </div>
           <div>

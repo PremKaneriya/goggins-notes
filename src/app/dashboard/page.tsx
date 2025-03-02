@@ -55,7 +55,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold bg-gradient-to-r ml-3 from-blue-600 to-indigo-600 bg-clip-text text-transparent">Goggins Notes</span>
+              <span className="text-xl font-bold bg-gradient-to-r ml-3 from-blue-600 to-indigo-600 bg-clip-text text-transparent">Goggins NoteBook</span>
             </div>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
               <button

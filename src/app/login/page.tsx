@@ -2,7 +2,7 @@
 "use client";
 
 // pages/login.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
@@ -12,6 +12,28 @@ export default function Login() {
   const [user, setUser] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+    const [token, setToken] = useState<string | null>(null);
+  
+    useEffect(() => {
+      const fetchToken = async () => {
+        try {
+          const res = await fetch("/api/auth/token", {
+            method: "GET",
+            credentials: "include", // Ensures cookies are sent
+          });
+  
+          const data = await res.json();
+          if (data.token) {
+            setToken(data.token);
+            router.push("/dashboard"); // Redirect if token exists
+          }
+        } catch (error) {
+          console.error("Error fetching token:", error);
+        }
+      };
+  
+      fetchToken();
+    }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
