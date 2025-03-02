@@ -319,9 +319,9 @@ interface FullPageNoteProps {
     title: string,
     content: string,
     updatedAt: string
-  ) => void; // Fixed parameter type
-  onDelete?: (id: string) => void; // Optional for create mode
-  isCreateMode?: boolean; // New prop to distinguish between create and edit modes
+  ) => void;
+  onDelete?: (id: string) => void;
+  isCreateMode?: boolean;
 }
 
 const FullPageNote: React.FC<FullPageNoteProps> = ({
@@ -336,8 +336,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const [content, setContent] = useState(note?.content || "");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // IMPORTANT FIX: Create independent lastEditTime state that doesn't rely on note props
   const [lastEditTime, setLastEditTime] = useState<string>(
     note?.updatedAt || note?.createdAt || new Date().toISOString()
   );
@@ -345,10 +343,14 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Update all state when note changes
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      setLastEditTime(
+        note.updatedAt || note.createdAt || new Date().toISOString()
+      );
       setHasChanges(false);
       setIsEditing(isCreateMode ? true : false);
     } else {
@@ -382,8 +384,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
     }
   }, [title, content, note, isCreateMode]);
 
-  // IMPORTANT: Removed the useEffect that was overriding lastEditTime changes
-
   const handleSave = useCallback(async () => {
     if (!title.trim() || !content.trim()) return;
 
@@ -392,7 +392,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
       const currentTime = new Date().toISOString();
 
-      // ✅ Update lastEditTime BEFORE the API call
+      // Update lastEditTime BEFORE the API call
       setLastEditTime(currentTime);
 
       await onSave(note._id, title, content, currentTime);
@@ -638,7 +638,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                   : `Last edited: ${formatDate(lastEditTime)}`}
               </span>
             </div>
-
           </div>
         </div>
       </div>
@@ -736,9 +735,11 @@ const Dashboard = () => {
 
         if (!res.ok) throw new Error("Failed to update note");
 
-        // Update the notes state
+        // Update the notes state with the new updatedAt timestamp
         setNotes(
-          notes.map((n) => (n._id === noteId ? { ...n, title, content } : n))
+          notes.map((n) =>
+            n._id === noteId ? { ...n, title, content, updatedAt } : n
+          )
         );
 
         // If this was triggered from the modal, close it
@@ -748,7 +749,7 @@ const Dashboard = () => {
 
         // If this was triggered from full-page view, update the fullPageNote
         if (fullPageNote && fullPageNote._id === noteId) {
-          setFullPageNote({ ...fullPageNote, title, content });
+          setFullPageNote({ ...fullPageNote, title, content, updatedAt });
         }
       }
       // Otherwise it's a create operation
@@ -857,8 +858,7 @@ const Dashboard = () => {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
-          <div className="mb-6"></div>
-
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
             {filteredNotes.map((note) => (
               <NoteCard
