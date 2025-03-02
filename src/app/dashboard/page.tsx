@@ -293,14 +293,21 @@ const NoteCard: React.FC<NoteCardProps> = ({
 interface FullPageNoteProps {
   note: Note;
   onClose: () => void;
-  onEdit: (noteId: string, title: string, content: string) => void;
-  onDelete: (id: string) => void;
+  onSave: (noteId: string, title: string, content: string) => void; // Modified to handle both create and edit
+  onDelete?: (id: string) => void; // Optional for create mode
+  isCreateMode?: boolean; // New prop to distinguish between create and edit modes
 }
 
-const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDelete }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
+const FullPageNote: React.FC<FullPageNoteProps> = ({ 
+  note, 
+  onClose, 
+  onSave, 
+  onDelete, 
+  isCreateMode = false 
+}) => {
+  const [isEditing, setIsEditing] = useState(isCreateMode ? true : false);
+  const [title, setTitle] = useState(note?.title || "");
+  const [content, setContent] = useState(note?.content || "");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -309,18 +316,23 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
 
   useEffect(() => {
     // Reset states when note changes
-    setTitle(note.title);
-    setContent(note.content);
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+    } else {
+      setTitle("");
+      setContent("");
+    }
     setHasChanges(false);
-    setIsEditing(false);
-  }, [note]);
+    setIsEditing(isCreateMode ? true : false);
+  }, [note, isCreateMode]);
 
   useEffect(() => {
-    // Focus on title input when entering edit mode
-    if (isEditing && titleInputRef.current) {
+    // Focus on title input when entering edit mode or in create mode
+    if ((isEditing || isCreateMode) && titleInputRef.current) {
       titleInputRef.current.focus();
     }
-  }, [isEditing]);
+  }, [isEditing, isCreateMode]);
 
   // Auto-resize textarea to fit content
   useEffect(() => {
@@ -332,23 +344,36 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
 
   // Check for unsaved changes
   useEffect(() => {
-    setHasChanges(title !== note.title || content !== note.content);
-  }, [title, content, note]);
+    if (isCreateMode) {
+      setHasChanges(title.trim() !== "" || content.trim() !== "");
+    } else if (note) {
+      setHasChanges(title !== note.title || content !== note.content);
+    }
+  }, [title, content, note, isCreateMode]);
 
   const handleSave = useCallback(async () => {
     if (!title.trim() || !content.trim()) return;
   
     try {
       setIsSaving(true);
-      await onEdit(note._id, title, content);
-      setIsEditing(false);
+      // If in create mode or note is null, call onSave without noteId
+      if (isCreateMode || !note) {
+        await onSave(note._id, title, content);
+      } else {
+        await onSave(note._id, title, content);
+      }
+      
+      if (!isCreateMode) {
+        setIsEditing(false);
+      }
+      
       setHasChanges(false);
     } catch (err) {
       console.error("Failed to save note:", err);
     } finally {
       setIsSaving(false);
     }
-  }, [title, content, note._id, onEdit, setIsEditing, setHasChanges]);
+  }, [title, content, note, onSave, isCreateMode]);
 
   const handleClose = () => {
     if (hasChanges) {
@@ -360,7 +385,9 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     onClose();
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Not saved yet";
+    
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
@@ -376,11 +403,13 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape key to cancel editing or close the note
       if (e.key === 'Escape') {
-        if (isEditing) {
+        if (isEditing && !isCreateMode) {
           if (hasChanges) {
             if (window.confirm("Discard changes?")) {
-              setTitle(note.title);
-              setContent(note.content);
+              if (note) {
+                setTitle(note.title);
+                setContent(note.content);
+              }
               setIsEditing(false);
             }
           } else {
@@ -392,12 +421,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
       }
 
       // Ctrl+Enter or Cmd+Enter to save
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && isEditing) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && (isEditing || isCreateMode)) {
         handleSave();
       }
 
-      // E key to edit when not already editing
-      if (e.key === 'e' && !isEditing &&
+      // E key to edit when not already editing and not in create mode
+      if (e.key === 'e' && !isEditing && !isCreateMode &&
         !(e.target instanceof HTMLInputElement) &&
         !(e.target instanceof HTMLTextAreaElement)) {
         setIsEditing(true);
@@ -414,7 +443,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isEditing, hasChanges, note, onClose, handleSave]);
+  }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">
@@ -429,7 +458,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
               <ArrowLeft size={20} />
             </button>
 
-            {isEditing ? (
+            {(isEditing || isCreateMode) ? (
               <input
                 ref={titleInputRef}
                 type="text"
@@ -449,24 +478,28 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
           </div>
 
           <div className="flex items-center gap-2">
-            {isEditing ? (
+            {(isEditing || isCreateMode) ? (
               <>
-                <button
-                  onClick={() => {
-                    setTitle(note.title);
-                    setContent(note.content);
-                    setIsEditing(false);
-                  }}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-                  aria-label="Cancel editing"
-                  disabled={isSaving}
-                >
-                  <X size={18} />
-                </button>
+                {!isCreateMode && (
+                  <button
+                    onClick={() => {
+                      if (note) {
+                        setTitle(note.title);
+                        setContent(note.content);
+                      }
+                      setIsEditing(false);
+                    }}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                    aria-label="Cancel editing"
+                    disabled={isSaving}
+                  >
+                    <X size={18} />
+                  </button>
+                )}
                 <button
                   onClick={handleSave}
                   className={`p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${isSaving ? 'opacity-75' : ''}`}
-                  aria-label="Save note"
+                  aria-label={isCreateMode ? "Create note" : "Save note"}
                   disabled={isSaving || !title.trim() || !content.trim()}
                 >
                   {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
@@ -481,25 +514,25 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
                 >
                   <Edit size={18} />
                 </button>
-                <button
-                  onClick={() => {
-                    onDelete(note._id);
-                    onClose();
-                  }}
-                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  aria-label="Delete note"
-                >
-                  <Trash2 size={18} />
-                </button>
+                {onDelete && note && (
+                  <button
+                    onClick={() => {
+                      onDelete(note._id);
+                      onClose();
+                    }}
+                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    aria-label="Delete note"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
               </>
             )}
           </div>
         </div>
 
-        {/* fix notes */}
-
         <div className="flex-1 overflow-y-auto p-6">
-          {isEditing ? (
+          {(isEditing || isCreateMode) ? (
             <textarea
               ref={contentTextareaRef}
               value={content}
@@ -520,12 +553,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({ note, onClose, onEdit, onDe
         <div className="p-4 border-t text-sm text-gray-500 flex items-center justify-between">
           <div className="flex items-center">
             <Calendar size={14} className="mr-2" />
-            Last edited: {formatDate(note.createdAt)}
+            {isCreateMode ? "New note" : `Last edited: ${formatDate(note?.createdAt)}`}
           </div>
 
-          {isEditing && (
+          {(isEditing || isCreateMode) && (
             <div className="text-xs text-gray-400">
-              Press Ctrl+Enter to save • Esc to cancel
+              Press Ctrl+Enter to save • Esc to {isCreateMode ? "close" : "cancel"}
             </div>
           )}
         </div>
@@ -547,6 +580,8 @@ const Dashboard = () => {
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [showFab, setShowFab] = useState(false);
   const [fullPageNote, setFullPageNote] = useState<Note | null>(null);
+  // Add new state for full-page create mode
+  const [isFullPageCreate, setIsFullPageCreate] = useState(false);
   // Add new state for logout confirmation
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
@@ -599,6 +634,65 @@ const Dashboard = () => {
     handleGetProfile();
   }, []);
 
+  // Unified handler for both create and edit
+  const handleSaveNote = async (noteId: string, title: string, content: string) => {
+    if (!title.trim() || !content.trim()) return;
+    
+    try {
+      // If noteId is provided, it's an edit operation
+      if (noteId) {
+        const res = await fetch("/api/auth/notes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ noteId, title, content }),
+        });
+
+        if (!res.ok) throw new Error("Failed to update note");
+
+        // Update the notes state
+        setNotes(
+          notes.map((n) =>
+            n._id === noteId ? { ...n, title, content } : n
+          )
+        );
+
+        // If this was triggered from the modal, close it
+        if (selectedNote && selectedNote._id === noteId) {
+          setIsEditModalOpen(false);
+        }
+
+        // If this was triggered from full-page view, update the fullPageNote
+        if (fullPageNote && fullPageNote._id === noteId) {
+          setFullPageNote({ ...fullPageNote, title, content });
+        }
+      } 
+      // Otherwise it's a create operation
+      else {
+        setIsCreating(true);
+        const res = await fetch("/api/auth/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, content }),
+          credentials: "include",
+        });
+        
+        if (!res.ok) throw new Error("Failed to create note");
+        
+        const data = await res.json();
+        setNotes([data.note, ...notes]);
+        
+        // Close whatever create UI was open
+        setIsCreateModalOpen(false);
+        setIsFullPageCreate(false);
+        setIsCreating(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setIsCreating(false);
+    }
+  };
+
   // Add new function to handle logout
   const handleLogout = async () => {
     try {
@@ -616,62 +710,6 @@ const Dashboard = () => {
       // No need to do anything else here as the redirect happens server-side
     } catch (err) {
       console.error("Logout error:", err);
-    }
-  };
-
-  const handleCreateNote = async (title: string, content: string) => {
-    if (!title.trim() || !content.trim()) return;
-    try {
-      setIsCreating(true);
-      const res = await fetch("/api/auth/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to create note");
-      const data = await res.json();
-      setNotes([data.note, ...notes]);
-      setIsCreateModalOpen(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleEditNote = async (noteId: string, title: string, content: string) => {
-    if (!title.trim() || !content.trim()) return;
-
-    try {
-      const res = await fetch("/api/auth/notes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ noteId, title, content }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update note");
-
-      // Update the notes state
-      setNotes(
-        notes.map((n) =>
-          n._id === noteId ? { ...n, title, content } : n
-        )
-      );
-
-      // If this was triggered from the modal, close it
-      if (selectedNote && selectedNote._id === noteId) {
-        setIsEditModalOpen(false);
-      }
-
-      // If this was triggered from full-page view, update the fullPageNote
-      if (fullPageNote && fullPageNote._id === noteId) {
-        setFullPageNote({ ...fullPageNote, title, content });
-      }
-
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -703,6 +741,12 @@ const Dashboard = () => {
       n.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Modified function to handle create note button click
+  const handleCreateNoteClick = () => {
+    // Open the full-page create interface instead of the modal
+    setIsFullPageCreate(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -720,7 +764,7 @@ const Dashboard = () => {
         profile={profile}
         activeView={activeView}
         setActiveView={setActiveView}
-        onCreateNote={() => setIsCreateModalOpen(true)}
+        onCreateNote={handleCreateNoteClick} // Modified to use our new function
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         notesCount={notes.length}
@@ -758,7 +802,7 @@ const Dashboard = () => {
                       : "Create your first note to get started"}
                   </p>
                   <button
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={handleCreateNoteClick}
                     className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -773,7 +817,7 @@ const Dashboard = () => {
 
       {showFab && (
         <button
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={handleCreateNoteClick}
           className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg flex items-center justify-center md:hidden z-20 hover:from-blue-700 hover:to-indigo-700 active:scale-95 transition-all"
           aria-label="Create new note"
         >
@@ -781,14 +825,14 @@ const Dashboard = () => {
         </button>
       )}
 
-      {/* Modal for creating notes */}
+      {/* We keep the modal for backward compatibility, but we could remove it */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Create Note"
       >
         <NoteForm
-          onSubmit={(title, content) => handleCreateNote(title, content)}
+          onSubmit={(title, content) => handleSaveNote("", title, content)}
           submitButtonText="Create Note"
           isSubmitting={isCreating}
         />
@@ -804,12 +848,13 @@ const Dashboard = () => {
           note={selectedNote}
           onSubmit={(title, content) => {
             if (selectedNote) {
-              handleEditNote(selectedNote._id, title, content);
+              handleSaveNote(selectedNote._id, title, content);
             }
           }}
           submitButtonText="Save Changes"
         />
       </Modal>
+
       {/* Logout confirmation dialog */}
       <Modal
         isOpen={isLogoutDialogOpen}
@@ -835,16 +880,30 @@ const Dashboard = () => {
         </div>
       </Modal>
 
-      {/* Add the FullPageNote component when a note is selected */}
+      {/* Add the FullPageNote component when a note is selected for viewing/editing */}
       {fullPageNote && (
         <FullPageNote
           note={fullPageNote}
           onClose={() => setFullPageNote(null)}
-          onEdit={handleEditNote}
+          onSave={handleSaveNote}
           onDelete={handleDeleteNote}
         />
       )}
 
+      {/* Add the FullPageNote component for note creation */}
+      {isFullPageCreate && (
+        <FullPageNote
+          onClose={() => setIsFullPageCreate(false)}
+          onSave={handleSaveNote}
+          isCreateMode={true} note={{
+            _id: "",
+            title: "",
+            content: "",
+            createdAt: new Date().toISOString(),
+            is_deleted: false
+          }}
+          />
+      )}
     </div>
   );
 };

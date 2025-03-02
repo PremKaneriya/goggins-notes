@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import connectDB from "@/dbConnect/dbConnect";
 import { getDataFromToken } from "@/utils/GetDataFromToken";
 import { NextRequest, NextResponse } from "next/server";
@@ -5,6 +6,8 @@ import User from "../../../../models/User.Model";
 import Note from "../../../../models/Notes.Model";
 
 connectDB();
+
+
 
 export async function GET(
     req: NextRequest,

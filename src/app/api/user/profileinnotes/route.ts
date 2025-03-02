@@ -1,8 +1,10 @@
 // In /app/api/user/profile/route.ts
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { getDataFromToken } from "@/utils/GetDataFromToken";
 import User from "../../../../../models/User.Model";
 import Note from "../../../../../models/Notes.Model";
+
 
 export async function GET(request: NextRequest) {
   try {
