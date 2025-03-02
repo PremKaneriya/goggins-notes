@@ -1,6 +1,20 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Trash2, Loader2, Search, Edit, Calendar, FileText, Users, Plus, Menu, X, ArrowLeft, Check, LogOut, } from "lucide-react";
+import {
+  Trash2,
+  Loader2,
+  Search,
+  Edit,
+  Calendar,
+  FileText,
+  Users,
+  Plus,
+  Menu,
+  X,
+  ArrowLeft,
+  Check,
+  LogOut,
+} from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -11,6 +25,7 @@ type Note = {
   content: string;
   createdAt: string;
   is_deleted: boolean;
+  updatedAt: string;
 };
 
 type Profile = {
@@ -55,25 +70,29 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold bg-gradient-to-r ml-3 from-blue-600 to-indigo-600 bg-clip-text text-transparent">Goggins NoteBook</span>
+              <span className="text-xl font-bold bg-gradient-to-r ml-3 from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Goggins NoteBook
+              </span>
             </div>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
               <button
                 onClick={() => setActiveView("notes")}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${activeView === "notes"
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  activeView === "notes"
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                }`}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Notes
               </button>
               <Link href="/groupnotes">
                 <button
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${activeView === "groups"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                    activeView === "groups"
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
+                  }`}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Groups
@@ -153,41 +172,44 @@ const Navbar: React.FC<NavbarProps> = ({
                 setActiveView("notes");
                 setIsMenuOpen(false);
               }}
-              className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${activeView === "notes"
+              className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${
+                activeView === "notes"
                   ? "bg-blue-50 text-blue-700"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+              }`}
             >
               <FileText className="w-5 h-5 mr-3" />
               Notes
             </button>
             <Link href="/groupnotes" className="block w-full">
               <button
-                className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${activeView === "groups"
+                className={`flex items-center w-full px-4 py-3 text-base font-medium rounded-lg ${
+                  activeView === "groups"
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                }`}
               >
                 <Users className="w-5 h-5 mr-3" />
                 Groups
               </button>
             </Link>
           </div>
-          
+
           <div className="pt-2 pb-3 border-t border-gray-200 px-4">
-
-
-            <Link href="/profileinnotes" className="flex flex-col items-start bg-gray-50 border border-gray-300 rounded-lg">
-            <div className="flex items-center py-2">
-              <div className="flex flex-col">
-                <span className="text-base font-medium text-gray-700 ml-4">
-                  {profile?.name + "_Goggins" || "User"}
-                </span>
-                <span className="text-sm text-gray-500 ml-4">
-                  {notesCount || 0} notes
-                </span>
+            <Link
+              href="/profileinnotes"
+              className="flex flex-col items-start bg-gray-50 border border-gray-300 rounded-lg"
+            >
+              <div className="flex items-center py-2">
+                <div className="flex flex-col">
+                  <span className="text-base font-medium text-gray-700 ml-4">
+                    {profile?.name + "_Goggins" || "User"}
+                  </span>
+                  <span className="text-sm text-gray-500 ml-4">
+                    {notesCount || 0} notes
+                  </span>
+                </div>
               </div>
-            </div>
             </Link>
           </div>
         </div>
@@ -204,9 +226,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="p-6 overflow-y-auto">
           <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10">
-            <h2 className="text-xl font-bold text-gray-800">
-              {title}
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
             <button
               onClick={onClose}
               aria-label="Close modal"
@@ -236,7 +256,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
   onEdit,
   onDelete,
   isFullWidth,
-  setFullPageNote
+  setFullPageNote,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -247,9 +267,9 @@ const NoteCard: React.FC<NoteCardProps> = ({
   // Format date in a more readable way
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
@@ -262,8 +282,9 @@ const NoteCard: React.FC<NoteCardProps> = ({
       {note.title && (
         <div className="mb-2">
           <h3
-            className={`text-base font-medium text-gray-800 ${expanded ? "" : "line-clamp-1"
-              } cursor-pointer`}
+            className={`text-base font-medium text-gray-800 ${
+              expanded ? "" : "line-clamp-1"
+            } cursor-pointer`}
             onClick={() => setFullPageNote(note)}
           >
             {note.title}
@@ -272,8 +293,9 @@ const NoteCard: React.FC<NoteCardProps> = ({
       )}
 
       <div
-        className={`text-gray-700 text-sm whitespace-pre-line break-words ${expanded ? "line-clamp-none" : "line-clamp-6"
-          } cursor-pointer mb-2`}
+        className={`text-gray-700 text-sm whitespace-pre-line break-words ${
+          expanded ? "line-clamp-none" : "line-clamp-6"
+        } cursor-pointer mb-2`}
         onClick={() => setFullPageNote(note)}
       >
         {note.content}
@@ -289,21 +311,25 @@ const NoteCard: React.FC<NoteCardProps> = ({
   );
 };
 
-// Now, let's create a new FullPageNote component
 interface FullPageNoteProps {
   note: Note;
   onClose: () => void;
-  onSave: (noteId: string, title: string, content: string) => void; // Modified to handle both create and edit
+  onSave: (
+    noteId: string,
+    title: string,
+    content: string,
+    updatedAt: string
+  ) => void; // Fixed parameter type
   onDelete?: (id: string) => void; // Optional for create mode
   isCreateMode?: boolean; // New prop to distinguish between create and edit modes
 }
 
-const FullPageNote: React.FC<FullPageNoteProps> = ({ 
-  note, 
-  onClose, 
-  onSave, 
-  onDelete, 
-  isCreateMode = false 
+const FullPageNote: React.FC<FullPageNoteProps> = ({
+  note,
+  onClose,
+  onSave,
+  onDelete,
+  isCreateMode = false,
 }) => {
   const [isEditing, setIsEditing] = useState(isCreateMode ? true : false);
   const [title, setTitle] = useState(note?.title || "");
@@ -311,20 +337,24 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // IMPORTANT FIX: Create independent lastEditTime state that doesn't rely on note props
+  const [lastEditTime, setLastEditTime] = useState<string>(
+    note?.updatedAt || note?.createdAt || new Date().toISOString()
+  );
+
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    // Reset states when note changes
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      setHasChanges(false);
+      setIsEditing(isCreateMode ? true : false);
     } else {
       setTitle("");
       setContent("");
     }
-    setHasChanges(false);
-    setIsEditing(isCreateMode ? true : false);
   }, [note, isCreateMode]);
 
   useEffect(() => {
@@ -338,7 +368,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   useEffect(() => {
     if (contentTextareaRef.current) {
       contentTextareaRef.current.style.height = "auto";
-      contentTextareaRef.current.style.height = contentTextareaRef.current.scrollHeight + "px";
+      contentTextareaRef.current.style.height =
+        contentTextareaRef.current.scrollHeight + "px";
     }
   }, [content, isEditing]);
 
@@ -351,22 +382,25 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
     }
   }, [title, content, note, isCreateMode]);
 
+  // IMPORTANT: Removed the useEffect that was overriding lastEditTime changes
+
   const handleSave = useCallback(async () => {
     if (!title.trim() || !content.trim()) return;
-  
+
     try {
       setIsSaving(true);
-      // If in create mode or note is null, call onSave without noteId
-      if (isCreateMode || !note) {
-        await onSave(note._id, title, content);
-      } else {
-        await onSave(note._id, title, content);
-      }
-      
+
+      const currentTime = new Date().toISOString();
+
+      // ✅ Update lastEditTime BEFORE the API call
+      setLastEditTime(currentTime);
+
+      await onSave(note._id, title, content, currentTime);
+
       if (!isCreateMode) {
         setIsEditing(false);
       }
-      
+
       setHasChanges(false);
     } catch (err) {
       console.error("Failed to save note:", err);
@@ -377,7 +411,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
   const handleClose = () => {
     if (hasChanges) {
-      // Could add a confirmation dialog here
       if (window.confirm("You have unsaved changes. Save before closing?")) {
         handleSave();
       }
@@ -387,13 +420,13 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Not saved yet";
-    
+
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
@@ -402,7 +435,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape key to cancel editing or close the note
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (isEditing && !isCreateMode) {
           if (hasChanges) {
             if (window.confirm("Discard changes?")) {
@@ -421,55 +454,63 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       }
 
       // Ctrl+Enter or Cmd+Enter to save
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && (isEditing || isCreateMode)) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key === "Enter" &&
+        (isEditing || isCreateMode)
+      ) {
         handleSave();
       }
 
       // E key to edit when not already editing and not in create mode
-      if (e.key === 'e' && !isEditing && !isCreateMode &&
+      if (
+        e.key === "e" &&
+        !isEditing &&
+        !isCreateMode &&
         !(e.target instanceof HTMLInputElement) &&
-        !(e.target instanceof HTMLTextAreaElement)) {
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
         setIsEditing(true);
         e.preventDefault();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     // Prevent scrolling of background content
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
     };
   }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl h-[90vh] flex flex-col animate-in zoom-in-50 duration-200">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center flex-1">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-xl w-full h-full sm:w-full sm:max-w-5xl sm:h-[90vh] flex flex-col animate-in zoom-in-50 duration-200">
+        <div className="flex items-center justify-between p-2 sm:p-4 border-b">
+          <div className="flex items-center flex-1 min-w-0">
             <button
               onClick={handleClose}
-              className="mr-4 p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              className="mr-2 sm:mr-4 p-1 sm:p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
               aria-label="Close full view"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
 
-            {(isEditing || isCreateMode) ? (
+            {isEditing || isCreateMode ? (
               <input
                 ref={titleInputRef}
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-2 py-1"
+                className="text-lg sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-1 truncate"
                 placeholder="Note title"
               />
             ) : (
               <h2
-                className="text-xl font-semibold text-gray-800 cursor-text"
+                className="text-lg sm:text-xl font-semibold text-gray-800 cursor-text truncate"
                 onClick={() => setIsEditing(true)}
               >
                 {title}
@@ -477,8 +518,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {(isEditing || isCreateMode) ? (
+          <div className="flex items-center gap-1 sm:gap-2 ml-2">
+            {isEditing || isCreateMode ? (
               <>
                 {!isCreateMode && (
                   <button
@@ -489,30 +530,36 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                       }
                       setIsEditing(false);
                     }}
-                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                    className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
                     aria-label="Cancel editing"
                     disabled={isSaving}
                   >
-                    <X size={18} />
+                    <X size={16} />
                   </button>
                 )}
                 <button
                   onClick={handleSave}
-                  className={`p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${isSaving ? 'opacity-75' : ''}`}
+                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${
+                    isSaving ? "opacity-75" : ""
+                  }`}
                   aria-label={isCreateMode ? "Create note" : "Save note"}
                   disabled={isSaving || !title.trim() || !content.trim()}
                 >
-                  {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                  {isSaving ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  className="p-1 sm:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                   aria-label="Edit note"
                 >
-                  <Edit size={18} />
+                  <Edit size={16} />
                 </button>
                 {onDelete && note && (
                   <button
@@ -520,10 +567,10 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                       onDelete(note._id);
                       onClose();
                     }}
-                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    className="p-1 sm:p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     aria-label="Delete note"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} />
                   </button>
                 )}
               </>
@@ -531,18 +578,18 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {(isEditing || isCreateMode) ? (
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+          {isEditing || isCreateMode ? (
             <textarea
               ref={contentTextareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-lg leading-relaxed"
+              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-base sm:text-lg leading-relaxed"
               placeholder="Note content"
             />
           ) : (
             <div
-              className="whitespace-pre-wrap font-sans text-gray-800 text-lg leading-relaxed cursor-text"
+              className="whitespace-pre-wrap font-sans text-gray-800 text-base sm:text-lg leading-relaxed cursor-text"
               onClick={() => setIsEditing(true)}
             >
               {content}
@@ -550,15 +597,21 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
           )}
         </div>
 
-        <div className="p-4 border-t text-sm text-gray-500 flex items-center justify-between">
-          <div className="flex items-center">
-            <Calendar size={14} className="mr-2" />
-            {isCreateMode ? "New note" : `Last edited: ${formatDate(note?.createdAt)}`}
+        <div className="p-2 sm:p-4 border-t text-xs sm:text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center mb-1 sm:mb-0">
+            <Calendar size={12} className="mr-1 sm:mr-2 flex-shrink-0" />
+            <span>
+              {/* IMPORTANT: This is where lastEditTime is displayed */}
+              {isCreateMode
+                ? "New note"
+                : `Last edited: ${formatDate(lastEditTime)}`}
+            </span>
           </div>
 
           {(isEditing || isCreateMode) && (
-            <div className="text-xs text-gray-400">
-              Press Ctrl+Enter to save • Esc to {isCreateMode ? "close" : "cancel"}
+            <div className="text-xs text-gray-400 hidden sm:block">
+              Press Ctrl+Enter to save • Esc to{" "}
+              {isCreateMode ? "close" : "cancel"}
             </div>
           )}
         </div>
@@ -577,7 +630,9 @@ const Dashboard = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activeView, setActiveView] = useState<"notes" | "groups">("notes");
-  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>(
+    {}
+  );
   const [showFab, setShowFab] = useState(false);
   const [fullPageNote, setFullPageNote] = useState<Note | null>(null);
   // Add new state for full-page create mode
@@ -635,9 +690,14 @@ const Dashboard = () => {
   }, []);
 
   // Unified handler for both create and edit
-  const handleSaveNote = async (noteId: string, title: string, content: string) => {
+  const handleSaveNote = async (
+    noteId: string,
+    title: string,
+    content: string,
+    updatedAt: string
+  ): Promise<void> => {
     if (!title.trim() || !content.trim()) return;
-    
+
     try {
       // If noteId is provided, it's an edit operation
       if (noteId) {
@@ -645,16 +705,14 @@ const Dashboard = () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ noteId, title, content }),
+          body: JSON.stringify({ noteId, title, content, updatedAt }),
         });
 
         if (!res.ok) throw new Error("Failed to update note");
 
         // Update the notes state
         setNotes(
-          notes.map((n) =>
-            n._id === noteId ? { ...n, title, content } : n
-          )
+          notes.map((n) => (n._id === noteId ? { ...n, title, content } : n))
         );
 
         // If this was triggered from the modal, close it
@@ -666,7 +724,7 @@ const Dashboard = () => {
         if (fullPageNote && fullPageNote._id === noteId) {
           setFullPageNote({ ...fullPageNote, title, content });
         }
-      } 
+      }
       // Otherwise it's a create operation
       else {
         setIsCreating(true);
@@ -676,12 +734,12 @@ const Dashboard = () => {
           body: JSON.stringify({ title, content }),
           credentials: "include",
         });
-        
+
         if (!res.ok) throw new Error("Failed to create note");
-        
+
         const data = await res.json();
         setNotes([data.note, ...notes]);
-        
+
         // Close whatever create UI was open
         setIsCreateModalOpen(false);
         setIsFullPageCreate(false);
@@ -773,8 +831,7 @@ const Dashboard = () => {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
-          <div className="mb-6">
-          </div>
+          <div className="mb-6"></div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
             {filteredNotes.map((note) => (
@@ -795,7 +852,9 @@ const Dashboard = () => {
               <div className="text-center py-16 col-span-full bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex flex-col items-center">
                   <FileText className="w-12 h-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">No notes found</h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    No notes found
+                  </h3>
                   <p className="text-gray-500 mb-6">
                     {searchQuery
                       ? `No notes matching "${searchQuery}"`
@@ -832,7 +891,9 @@ const Dashboard = () => {
         title="Create Note"
       >
         <NoteForm
-          onSubmit={(title, content) => handleSaveNote("", title, content)}
+          onSubmit={(title, content) =>
+            handleSaveNote("", title, content, new Date().toISOString())
+          }
           submitButtonText="Create Note"
           isSubmitting={isCreating}
         />
@@ -848,7 +909,12 @@ const Dashboard = () => {
           note={selectedNote}
           onSubmit={(title, content) => {
             if (selectedNote) {
-              handleSaveNote(selectedNote._id, title, content);
+              handleSaveNote(
+                selectedNote._id,
+                title,
+                content,
+                selectedNote.updatedAt
+              );
             }
           }}
           submitButtonText="Save Changes"
@@ -895,14 +961,16 @@ const Dashboard = () => {
         <FullPageNote
           onClose={() => setIsFullPageCreate(false)}
           onSave={handleSaveNote}
-          isCreateMode={true} note={{
+          isCreateMode={true}
+          note={{
             _id: "",
             title: "",
             content: "",
+            updatedAt: new Date().toISOString(),
             createdAt: new Date().toISOString(),
-            is_deleted: false
+            is_deleted: false,
           }}
-          />
+        />
       )}
     </div>
   );
@@ -995,10 +1063,11 @@ const NoteForm: React.FC<{
           }}
           onBlur={() => handleBlur("title")}
           className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all
-              ${errors.title && touched.title
-              ? "border-red-400 bg-red-50"
-              : "border-gray-200"
-            }`}
+              ${
+                errors.title && touched.title
+                  ? "border-red-400 bg-red-50"
+                  : "border-gray-200"
+              }`}
           placeholder="Enter note title..."
         />
         {errors.title && touched.title && (
@@ -1026,10 +1095,11 @@ const NoteForm: React.FC<{
           }}
           onBlur={() => handleBlur("content")}
           className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-48 text-base resize-none transition-all
-              ${errors.content && touched.content
-              ? "border-red-400 bg-red-50"
-              : "border-gray-200"
-            }`}
+              ${
+                errors.content && touched.content
+                  ? "border-red-400 bg-red-50"
+                  : "border-gray-200"
+              }`}
           placeholder="Enter note content..."
         />
         {errors.content && touched.content && (
