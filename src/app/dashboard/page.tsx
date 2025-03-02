@@ -487,16 +487,31 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 backdrop-blur-sm">
-      <div className="bg-white rounded-none shadow-xl w-full h-full sm:rounded-xl sm:w-full sm:max-w-5xl sm:h-[90vh] flex flex-col animate-in zoom-in-50 duration-200">
-        <div className="flex items-center justify-between p-2 sm:p-4 border-b">
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        // Only handle clicks directly on the backdrop, not bubbled events
+        if (e.target === e.currentTarget && (isEditing || isCreateMode)) {
+          // Check if save is possible (has title and content)
+          if (title.trim() && content.trim() && !isSaving) {
+            handleSave();
+          }
+        }
+      }}
+    >
+      <div
+        className="bg-white w-full h-full flex flex-col animate-in zoom-in-50 duration-200 sm:rounded-xl sm:max-w-5xl sm:h-[90vh] sm:m-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header Section */}
+        <div className="flex items-center justify-between p-3 border-b">
           <div className="flex items-center flex-1 min-w-0">
             <button
               onClick={handleClose}
-              className="mr-2 sm:mr-4 p-1 sm:p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              className="mr-2 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
               aria-label="Close full view"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={16} className="sm:h-5 sm:w-5" />
             </button>
 
             {isEditing || isCreateMode ? (
@@ -505,16 +520,19 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-lg sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-1 truncate"
+                className="text-base sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 truncate"
                 placeholder="Note title"
               />
             ) : (
-              <h2
-                className="text-lg sm:text-xl font-semibold text-gray-800 cursor-text truncate"
-                onClick={() => setIsEditing(true)}
-              >
-                {title}
-              </h2>
+              <div className="w-full">
+                <h2
+                  className="text-base sm:text-xl font-semibold text-gray-800 cursor-text truncate relative group"
+                  onClick={() => setIsEditing(true)}
+                >
+                  {title}
+                  <span className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-10 transition-opacity rounded"></span>
+                </h2>
+              </div>
             )}
           </div>
 
@@ -534,7 +552,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                     aria-label="Cancel editing"
                     disabled={isSaving}
                   >
-                    <X size={16} />
+                    <X size={14} className="sm:h-4 sm:w-4" />
                   </button>
                 )}
                 <button
@@ -546,21 +564,15 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                   disabled={isSaving || !title.trim() || !content.trim()}
                 >
                   {isSaving ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin sm:h-4 sm:w-4" />
                   ) : (
-                    <Check size={16} />
+                    <Check size={14} className="sm:h-4 sm:w-4" />
                   )}
                 </button>
               </>
             ) : (
-              <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-1 sm:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  aria-label="Edit note"
-                >
-                  <Edit size={16} />
-                </button>
+              <div className="flex">
+                {/* Edit button removed since we can tap directly on content */}
                 {onDelete && note && (
                   <button
                     onClick={() => {
@@ -570,50 +582,64 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                     className="p-1 sm:p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     aria-label="Delete note"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} className="sm:h-4 sm:w-4" />
                   </button>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        {/* Content Section - Made directly editable on tap */}
+        <div
+          className="flex-1 overflow-y-auto p-3 sm:p-6"
+          onClick={() => {
+            if (!isEditing && !isCreateMode) {
+              setIsEditing(true);
+              // Focus the textarea after a brief delay to allow state to update
+              setTimeout(() => {
+                if (contentTextareaRef.current) {
+                  contentTextareaRef.current.focus();
+                }
+              }, 10);
+            }
+          }}
+        >
           {isEditing || isCreateMode ? (
             <textarea
               ref={contentTextareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-base sm:text-lg leading-relaxed"
+              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-sm sm:text-lg leading-relaxed"
               placeholder="Note content"
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <div
-              className="whitespace-pre-wrap font-sans text-gray-800 text-base sm:text-lg leading-relaxed cursor-text"
-              onClick={() => setIsEditing(true)}
-            >
-              {content}
+            <div className="whitespace-pre-wrap font-sans text-gray-800 text-sm sm:text-lg leading-relaxed cursor-text relative group">
+              {content || (
+                <span className="text-gray-400">Tap to start writing...</span>
+              )}
+              <span className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-10 transition-opacity rounded"></span>
             </div>
           )}
         </div>
 
-        <div className="p-2 sm:p-4 border-t text-xs sm:text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center mb-1 sm:mb-0">
-            <Calendar size={12} className="mr-1 sm:mr-2 flex-shrink-0" />
-            <span>
-              {/* IMPORTANT: This is where lastEditTime is displayed */}
-              {isCreateMode
-                ? "New note"
-                : `Last edited: ${formatDate(lastEditTime)}`}
-            </span>
-          </div>
-
-          {(isEditing || isCreateMode) && (
-            <div className="text-xs text-gray-400 hidden sm:block">
-              Press Ctrl+Enter to save • Esc to{" "}
-              {isCreateMode ? "close" : "cancel"}
+        {/* Footer Section */}
+        <div className="p-2 sm:p-4 border-t text-xs text-gray-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center mb-2 sm:mb-0">
+              <Calendar
+                size={10}
+                className="mr-1 sm:mr-2 flex-shrink-0 sm:h-3 sm:w-3"
+              />
+              <span>
+                {isCreateMode
+                  ? "New note"
+                  : `Last edited: ${formatDate(lastEditTime)}`}
+              </span>
             </div>
-          )}
+
+          </div>
         </div>
       </div>
     </div>
