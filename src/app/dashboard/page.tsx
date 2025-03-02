@@ -31,6 +31,7 @@ type Note = {
 type Profile = {
   name: string;
   notesCreated: number;
+  avatar?: string;
 };
 
 interface ModalProps {
@@ -64,6 +65,11 @@ const Navbar: React.FC<NavbarProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const router = useRouter();
+
+  const getInitials = (name: string) => {
+    return name?.charAt(0).toUpperCase() || "U";
+  };
+
   return (
     <nav className="bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4">
@@ -117,13 +123,27 @@ const Navbar: React.FC<NavbarProps> = ({
               onClick={onCreateNote}
               className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-all"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Note
+              <Plus className="w-4 h-4" />
+              <span className="ml-2">Create Note</span>
             </button>
             <Link href="/profileinnotes" className="flex flex-col items-start">
               <div className="ml-3 relative flex items-center p-1 pl-3 pr-4 rounded-lg bg-gray-50 border border-gray-300">
+                {/* Added avatar */}
+                <div className="flex-shrink-0 mr-3">
+                  {profile?.avatar ? (
+                    <img
+                      src={profile.avatar}
+                      alt={`${profile.name}'s avatar`}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium">
+                      {profile ? getInitials(profile.name) : "U"}
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium text-gray-700 ">
+                  <span className="text-sm font-medium text-gray-700">
                     {profile?.name + "_Goggins" || "User"}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -200,12 +220,25 @@ const Navbar: React.FC<NavbarProps> = ({
               href="/profileinnotes"
               className="flex flex-col items-start bg-gray-50 border border-gray-300 rounded-lg"
             >
-              <div className="flex items-center py-2">
-                <div className="flex flex-col">
-                  <span className="text-base font-medium text-gray-700 ml-4">
+              <div className="flex  ml-2 items-center p-2">
+                <div className="flex-shrink-0">
+                  {profile?.avatar ? (
+                    <img
+                      src={profile.avatar}
+                      alt={`${profile.name}'s avatar`}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium">
+                      {profile ? getInitials(profile.name) : "U"}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col ml-3">
+                  <span className="text-base font-medium text-gray-700">
                     {profile?.name + "_Goggins" || "User"}
                   </span>
-                  <span className="text-sm text-gray-500 ml-4">
+                  <span className="text-sm text-gray-500">
                     {notesCount || 0} notes
                   </span>
                 </div>
@@ -858,7 +891,6 @@ const Dashboard = () => {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-auto">
             {filteredNotes.map((note) => (
               <NoteCard
