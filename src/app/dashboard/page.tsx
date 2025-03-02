@@ -488,7 +488,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full h-full sm:w-full sm:max-w-5xl sm:h-[90vh] flex flex-col animate-in zoom-in-50 duration-200">
+      <div className="bg-white rounded-none shadow-xl w-full h-full sm:rounded-xl sm:w-full sm:max-w-5xl sm:h-[90vh] flex flex-col animate-in zoom-in-50 duration-200">
         <div className="flex items-center justify-between p-2 sm:p-4 border-b">
           <div className="flex items-center flex-1 min-w-0">
             <button
