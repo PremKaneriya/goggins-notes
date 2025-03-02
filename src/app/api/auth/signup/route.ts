@@ -63,6 +63,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!password) {
+      return NextResponse.json(
+        { error: "Password is required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters long" },
+        { status: 400 }
+      );
+    }
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!phoneNumber) {
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!firstName) {
+      return NextResponse.json(
+        { error: "First name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!avatar) {
+      return NextResponse.json(
+        { error: "Avatar is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the email is already in use
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Email is already in use" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the phone number is already in use
+    const existingPhoneNumber = await User.findOne({ phoneNumber });
+    if (existingPhoneNumber) {
+      return NextResponse.json(
+        { error: "Phone number is already in use" },
+        { status: 400 }
+      );
+    }
+
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 

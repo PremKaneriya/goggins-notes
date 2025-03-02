@@ -87,6 +87,14 @@ export default function Signup() {
     fileInputRef.current?.click();
   };
 
+  const removeAvatar = () => {
+    setAvatar(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -150,7 +158,7 @@ export default function Signup() {
       router.push("/login");
     } catch (error: any) {
       setError(error.message);
-      toast.error(error.message);
+      toast.error(error.message, { duration: 5000 });
     } finally {
       setLoading(false);
     }
@@ -197,26 +205,43 @@ export default function Signup() {
 
         {/* Sign-Up Form */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-6" encType="multipart/form-data">
-          {/* Avatar Upload */}
+          {/* Avatar Upload - Improved Professional Version */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
               Profile Picture
             </label>
             <div className="flex flex-col items-center">
-            <div onClick={triggerFileInput}
-                  className="relative overflow-hidden border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors bg-gray-50 flex items-center justify-center mb-2"
+              <div 
+                className="w-32 h-32 rounded-full relative overflow-hidden border-2 border-dashed hover:border-blue-400 cursor-pointer transition-colors duration-300 mb-4 group"
               >
                 {avatarPreview ? (
-                  <Image 
-                    src={avatarPreview} 
-                    alt="Avatar preview" 
-                    fill
-                    className="object-cover"
-                  />
+                  <div className="relative w-full h-full">
+                    <Image 
+                      src={avatarPreview} 
+                      alt="Avatar preview" 
+                      fill
+                      className="object-cover rounded-full"
+                    />
+                    <div 
+                      className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full flex items-center justify-center"
+                      onClick={triggerFileInput}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <div 
+                    className="w-full h-full bg-gray-100 flex flex-col items-center justify-center rounded-full"
+                    onClick={triggerFileInput}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="text-xs mt-2 text-gray-500">Click to upload</span>
+                  </div>
                 )}
               </div>
               <input
@@ -228,18 +253,42 @@ export default function Signup() {
                 onChange={handleAvatarChange}
                 className="hidden"
               />
-              <button 
-                type="button" 
-                onClick={triggerFileInput}
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
-                {avatarPreview ? "Change avatar" : "Upload avatar"}
-              </button>
+              
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  onClick={triggerFileInput}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                  </svg>
+                  {avatarPreview ? "Change" : "Upload"}
+                </button>
+                
+                {avatarPreview && (
+                  <button 
+                    type="button" 
+                    onClick={removeAvatar}
+                    className="text-sm font-medium text-red-600 hover:text-red-500 flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Remove
+                  </button>
+                )}
+              </div>
+              
               {avatar && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mt-2">
                   {avatar.name} ({Math.round(avatar.size / 1024)}KB)
                 </p>
               )}
+              
+              <p className="text-xs text-gray-500 mt-2">
+                Recommended: Square image, at least 200x200px
+              </p>
             </div>
           </div>
 
