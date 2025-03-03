@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Check,
   LogOut,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -374,6 +375,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const [lastEditTime, setLastEditTime] = useState<string>(
     note?.updatedAt || note?.createdAt || new Date().toISOString()
   );
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -464,6 +466,21 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       minute: "2-digit",
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Copy note content to clipboard
+  const copyNoteToClipboard = () => {
+    const formattedContent = `${title}\n\n${content}`;
+    navigator.clipboard.writeText(formattedContent).then(
+      () => {
+        setCopySuccess(true);
+        // Reset the success message after 2 seconds
+        setTimeout(() => setCopySuccess(false), 2000);
+      },
+      (err) => {
+        console.error("Could not copy text: ", err);
+      }
+    );
   };
 
   // Handle keyboard shortcuts
@@ -607,7 +624,29 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               </>
             ) : (
               <div className="flex">
-                {/* Edit button removed since we can tap directly on content */}
+                {/* Copy button */}
+                <button
+                  onClick={copyNoteToClipboard}
+                  className={`p-1 sm:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all mr-1 sm:mr-2 flex items-center gap-1 ${
+                    copySuccess ? "text-green-600 bg-green-50" : ""
+                  }`}
+                  aria-label="Copy note"
+                  title="Copy note content"
+                >
+                  {copySuccess ? (
+                    <>
+                      <Check size={14} className="sm:h-4 sm:w-4" />
+                      <span className="text-xs hidden sm:inline">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} className="sm:h-4 sm:w-4" />
+                      <span className="text-xs hidden sm:inline">Copy</span>
+                    </>
+                  )}
+                </button>
+                
+                {/* Delete button */}
                 {onDelete && note && (
                   <button
                     onClick={() => {
@@ -672,6 +711,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                   ? "New note"
                   : `Last edited: ${formatDate(lastEditTime)}`}
               </span>
+            </div>
+            
+            {/* Keyboard shortcuts hint */}
+            <div className="hidden sm:flex items-center gap-4 text-gray-400">
+              <span>Press <kbd className="px-1 py-0.5 rounded bg-gray-100">E</kbd> to edit</span>
+              <span>Press <kbd className="px-1 py-0.5 rounded bg-gray-100">Esc</kbd> to cancel</span>
             </div>
           </div>
         </div>
