@@ -170,7 +170,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile menu - improved for usability */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white shadow-lg">
+        <div className="md:hidden border-t border-gray-200 shadow-lg">
           <div className="pt-2 pb-3 space-y-1 px-4">
             {/* Search bar moved to the top of mobile menu */}
             <div className="relative mb-3 mt-1">
@@ -298,19 +298,23 @@ const NoteCard: React.FC<NoteCardProps> = ({
   };
 
   // Format date in a more readable way
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+// Format date in a more readable way and use updatedAt if available
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
 
   return (
     <div
-      className="rounded-lg border border-gray-300 bg-white hover:shadow-lg transition-shadow duration-200 
-    flex flex-col p-4 w-full h-auto"
+      className="rounded-lg border border-gray-300 hover:shadow-lg transition-shadow duration-200  
+    flex flex-col p-4 w-full h-auto cursor-pointer"
+    onClick={() => setFullPageNote(note)}
     >
       {note.title && (
         <div className="mb-2">
@@ -318,7 +322,6 @@ const NoteCard: React.FC<NoteCardProps> = ({
             className={`text-base font-medium text-gray-800 ${
               expanded ? "" : "line-clamp-1"
             } cursor-pointer`}
-            onClick={() => setFullPageNote(note)}
           >
             {note.title}
           </h3>
@@ -329,7 +332,6 @@ const NoteCard: React.FC<NoteCardProps> = ({
         className={`text-gray-700 text-sm whitespace-pre-line break-words ${
           expanded ? "line-clamp-none" : "line-clamp-6"
         } cursor-pointer mb-2`}
-        onClick={() => setFullPageNote(note)}
       >
         {note.content}
       </div>
@@ -337,7 +339,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
       <div className="flex justify-between items-center mt-auto pt-2 text-xs text-gray-400">
         <div className="flex items-center">
           <Calendar size={12} className="mr-1" />
-          {formatDate(note.createdAt)}
+          {formatDate(note.updatedAt)}
         </div>
       </div>
     </div>
@@ -543,7 +545,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               onClick={handleClose}
               className="mr-2 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
               aria-label="Close full view"
-              disabled={isSaving}
             >
               <ArrowLeft size={16} className="sm:h-5 sm:w-5" />
             </button>
@@ -556,7 +557,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-base sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 truncate"
                 placeholder="Note title"
-                disabled={isSaving}
               />
             ) : (
               <div className="w-full">
@@ -592,8 +592,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 )}
                 <button
                   onClick={handleSave}
-                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center justify-center min-w-8 sm:min-w-10 ${
-                    isSaving ? "opacity-75 cursor-not-allowed" : ""
+                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${
+                    isSaving ? "opacity-75" : ""
                   }`}
                   aria-label={isCreateMode ? "Create note" : "Save note"}
                   disabled={isSaving || !title.trim() || !content.trim()}
@@ -648,7 +648,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-sm sm:text-lg leading-relaxed"
               placeholder="Note content"
               onClick={(e) => e.stopPropagation()}
-              disabled={isSaving}
             />
           ) : (
             <div className="whitespace-pre-wrap font-sans text-gray-800 text-sm sm:text-lg leading-relaxed cursor-text relative group">
@@ -674,12 +673,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                   : `Last edited: ${formatDate(lastEditTime)}`}
               </span>
             </div>
-            {isSaving && (
-              <div className="text-blue-600 flex items-center animate-pulse">
-                <Loader2 size={10} className="animate-spin mr-1 sm:h-3 sm:w-3" />
-                <span>Saving...</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
