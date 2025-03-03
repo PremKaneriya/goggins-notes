@@ -543,6 +543,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               onClick={handleClose}
               className="mr-2 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
               aria-label="Close full view"
+              disabled={isSaving}
             >
               <ArrowLeft size={16} className="sm:h-5 sm:w-5" />
             </button>
@@ -555,6 +556,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-base sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 truncate"
                 placeholder="Note title"
+                disabled={isSaving}
               />
             ) : (
               <div className="w-full">
@@ -590,8 +592,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 )}
                 <button
                   onClick={handleSave}
-                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${
-                    isSaving ? "opacity-75" : ""
+                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center justify-center min-w-8 sm:min-w-10 ${
+                    isSaving ? "opacity-75 cursor-not-allowed" : ""
                   }`}
                   aria-label={isCreateMode ? "Create note" : "Save note"}
                   disabled={isSaving || !title.trim() || !content.trim()}
@@ -646,6 +648,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-sm sm:text-lg leading-relaxed"
               placeholder="Note content"
               onClick={(e) => e.stopPropagation()}
+              disabled={isSaving}
             />
           ) : (
             <div className="whitespace-pre-wrap font-sans text-gray-800 text-sm sm:text-lg leading-relaxed cursor-text relative group">
@@ -671,6 +674,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                   : `Last edited: ${formatDate(lastEditTime)}`}
               </span>
             </div>
+            {isSaving && (
+              <div className="text-blue-600 flex items-center animate-pulse">
+                <Loader2 size={10} className="animate-spin mr-1 sm:h-3 sm:w-3" />
+                <span>Saving...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
