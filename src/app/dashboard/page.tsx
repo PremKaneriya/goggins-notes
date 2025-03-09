@@ -157,6 +157,22 @@ const Navbar: React.FC<NavbarProps> = ({
             </Link>
           </div>
           <div className="flex items-center md:hidden">
+            {/* Added small profile avatar in the header for mobile */}
+            <Link href="/profileinnotes" className="flex flex-col items-start">
+            <div className="flex-shrink-0 mr-3">
+              {profile?.avatar ? (
+                <img
+                  src={profile.avatar}
+                  alt={`${profile.name}'s avatar`}
+                  className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium border border-gray-200">
+                  {profile ? getInitials(profile.name) : "U"}
+                </div>
+              )}
+            </div>
+            </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
@@ -189,6 +205,8 @@ const Navbar: React.FC<NavbarProps> = ({
               />
             </div>
 
+            {/* Create Note button added to mobile menu */}
+
             {/* Navigation items */}
             <button
               onClick={() => {
@@ -218,36 +236,6 @@ const Navbar: React.FC<NavbarProps> = ({
             </Link>
           </div>
 
-          <div className="pt-2 pb-3 border-t border-gray-200 px-4">
-            <Link
-              href="/profileinnotes"
-              className="flex flex-col items-start bg-gray-50 border border-gray-300 rounded-lg"
-            >
-              <div className="flex  ml-2 items-center p-2">
-                <div className="flex-shrink-0">
-                  {profile?.avatar ? (
-                    <img
-                      src={profile.avatar}
-                      alt={`${profile.name}'s avatar`}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium">
-                      {profile ? getInitials(profile.name) : "U"}
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col ml-3">
-                  <span className="text-base font-medium text-gray-700">
-                    {profile?.name + "_Goggins" || "User"}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {notesCount || 0} notes
-                  </span>
-                </div>
-              </div>
-            </Link>
-          </div>
         </div>
       )}
     </nav>
