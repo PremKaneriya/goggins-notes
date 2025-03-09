@@ -14,13 +14,45 @@ export default function Signup() {
     password: "", 
     phoneNumber: "", 
     firstName: "",
+    countryCode: "+91", // Default country code (US)
   });
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState<"empty" | "weak" | "medium" | "strong">("empty");
   const [token, setToken] = useState<string | null>(null);
+  const [showCountryList, setShowCountryList] = useState(false);
+  
+  // List of common country codes with phone length validation
+  const countryCodes = [
+    { code: "+1", country: "US/Canada", maxLength: 10 },
+    { code: "+44", country: "UK", maxLength: 10 },
+    { code: "+49", country: "Germany", maxLength: 11 },
+    { code: "+33", country: "France", maxLength: 9 },
+    { code: "+61", country: "Australia", maxLength: 9 },
+    { code: "+81", country: "Japan", maxLength: 10 },
+    { code: "+86", country: "China", maxLength: 11 },
+    { code: "+91", country: "India", maxLength: 10 },
+    { code: "+52", country: "Mexico", maxLength: 10 },
+    { code: "+55", country: "Brazil", maxLength: 9 },
+    { code: "+27", country: "South Africa", maxLength: 9 },
+    { code: "+82", country: "South Korea", maxLength: 10 },
+    { code: "+39", country: "Italy", maxLength: 10 },
+    { code: "+34", country: "Spain", maxLength: 9 },
+    { code: "+7", country: "Russia", maxLength: 10 },
+    { code: "+60", country: "Malaysia", maxLength: 9 },
+    { code: "+65", country: "Singapore", maxLength: 8 },
+    { code: "+971", country: "UAE", maxLength: 9 },
+    { code: "+966", country: "Saudi Arabia", maxLength: 9 },
+    { code: "+20", country: "Egypt", maxLength: 10 },
+  ];
+  
+  // Get currently selected country code info
+  const getCurrentCountryInfo = () => {
+    return countryCodes.find(c => c.code === user.countryCode) || countryCodes[0];
+  };
   
   useEffect(() => {
     const fetchToken = async () => {
@@ -42,6 +74,18 @@ export default function Signup() {
 
     fetchToken();
   }, [router]);
+  
+  // Close country dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showCountryList && !(event.target as Element).closest('.country-dropdown')) {
+        setShowCountryList(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCountryList]);
     
   const checkPasswordStrength = (password: string) => {
     if (!password) {
@@ -77,9 +121,52 @@ export default function Signup() {
     setPasswordStrength(checkPasswordStrength(user.password));
   }, [user.password]);
 
+  // Validate phone number based on country code
+  const validatePhoneNumber = (number: string, countryCode: string) => {
+    const countryInfo = countryCodes.find(c => c.code === countryCode);
+    if (!countryInfo) return false;
+    
+    // Allow only numbers
+    if (!/^\d+$/.test(number)) {
+      setPhoneError("Phone number should contain only digits");
+      return false;
+    }
+    
+    // Check if length matches country requirements
+    if (number.length !== countryInfo.maxLength) {
+      setPhoneError(`Phone number for ${countryInfo.country} should be exactly ${countryInfo.maxLength} digits`);
+      return false;
+    }
+    
+    setPhoneError("");
+    return true;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUser((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "phoneNumber") {
+      // Allow only numbers and restrict to max length based on country code
+      const countryInfo = getCurrentCountryInfo();
+      const numericValue = value.replace(/\D/g, '');
+      
+      if (numericValue.length <= countryInfo.maxLength) {
+        setUser(prev => ({ ...prev, [name]: numericValue }));
+        validatePhoneNumber(numericValue, user.countryCode);
+      }
+    } else {
+      setUser(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const setCountryCode = (code: string) => {
+    setUser(prev => {
+      // Clear phone validation error when changing country
+      setPhoneError("");
+      // Clear phone number when changing country to avoid validation issues
+      return { ...prev, countryCode: code, phoneNumber: "" };
+    });
+    setShowCountryList(false);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +214,12 @@ export default function Signup() {
       return;
     }
     
+    // Validate phone number
+    if (!validatePhoneNumber(user.phoneNumber, user.countryCode)) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+    
     setLoading(true);
     setError("");
 
@@ -143,6 +236,9 @@ export default function Signup() {
       Object.entries(user).forEach(([key, value]) => {
         formData.append(key, value);
       });
+      
+      // Combine country code with phone number
+      formData.set("phoneNumber", `${user.countryCode}${user.phoneNumber}`);
       
       // Append avatar if available
       if (avatar) {
@@ -212,6 +308,16 @@ export default function Signup() {
       default:
         return "";
     }
+  };
+
+  // Format phone number for display (add spaces for readability)
+  const formatPhoneDisplay = (phone: string) => {
+    if (!phone) return "";
+    
+    // Format based on length (this is a simple example, can be customized)
+    if (phone.length <= 3) return phone;
+    if (phone.length <= 6) return `${phone.slice(0, 3)} ${phone.slice(3)}`;
+    return `${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
   };
 
   return (
@@ -324,21 +430,90 @@ export default function Signup() {
                     />
                   </div>
 
-                  {/* Phone Number Input */}
+                  {/* Phone Number Input with Country Code */}
                   <div>
                     <label htmlFor="phoneNumber" className="block text-xs font-medium text-gray-700 mb-1">
                       Phone Number
                     </label>
-                    <input
-                      type="tel"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      value={user.phoneNumber}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
-                      placeholder="Enter your phone number"
-                      required
-                    />
+                    <div className="flex flex-col sm:flex-row">
+                      {/* Country Code Dropdown */}
+                      <div className="relative country-dropdown w-full sm:w-auto mb-2 sm:mb-0">
+                        <button
+                          type="button"
+                          onClick={() => setShowCountryList(!showCountryList)}
+                          className="flex items-center justify-between px-3 py-2 border border-gray-300 bg-gray-50 rounded-md sm:rounded-r-none w-full sm:w-auto text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+                        >
+                          <span className="flex items-center">
+                            <span className="font-medium">{user.countryCode}</span>
+                            <span className="text-gray-500 hidden sm:inline ml-2">({getCurrentCountryInfo().country})</span>
+                          </span>
+                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </button>
+                        
+                        {/* Country Code List */}
+                        {showCountryList && (
+                          <div className="absolute z-10 mt-1 w-full sm:w-64 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto left-0">
+                            <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                              <div className="text-xs font-medium text-gray-500 px-2">
+                                Select Country Code
+                              </div>
+                            </div>
+                            <div className="p-1 space-y-0">
+                              {countryCodes.map((item) => (
+                                <button
+                                  key={item.code}
+                                  type="button"
+                                  onClick={() => setCountryCode(item.code)}
+                                  className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors flex justify-between items-center ${
+                                    user.countryCode === item.code ? 'bg-blue-50 text-blue-600' : ''
+                                  }`}
+                                >
+                                  <span className="flex items-center">
+                                    <span>{item.country}</span>
+                                    <span className="text-xs text-gray-500 ml-1">({item.maxLength} digits)</span>
+                                  </span>
+                                  <span className="font-medium">{item.code}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Phone Number Input */}
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        value={user.phoneNumber}
+                        onChange={handleInputChange}
+                        className="flex-1 px-3 py-2 rounded-md sm:rounded-l-none border border-gray-300 sm:border-l-0 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+                        placeholder={`${getCurrentCountryInfo().maxLength} digits`}
+                        required
+                        inputMode="numeric"
+                        pattern="\d*"
+                        maxLength={getCurrentCountryInfo().maxLength}
+                      />
+                    </div>
+                    
+                    {/* Phone format hint */}
+                    <div className="flex justify-between mt-1">
+                      <p className="text-xs text-gray-500">
+                        Format: {user.countryCode} + {getCurrentCountryInfo().maxLength} digits
+                      </p>
+                      {user.phoneNumber && (
+                        <p className="text-xs font-medium">
+                          {user.phoneNumber.length}/{getCurrentCountryInfo().maxLength}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Phone error message */}
+                    {phoneError && (
+                      <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -409,7 +584,7 @@ export default function Signup() {
             {/* Sign-Up Button */}
             <button
               type="submit"
-              disabled={loading || passwordStrength !== "strong"}
+              disabled={loading || passwordStrength !== "strong" || !!phoneError || user.phoneNumber.length !== getCurrentCountryInfo().maxLength}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
