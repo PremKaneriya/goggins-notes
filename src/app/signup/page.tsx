@@ -22,26 +22,26 @@ export default function Signup() {
   const [passwordStrength, setPasswordStrength] = useState<"empty" | "weak" | "medium" | "strong">("empty");
   const [token, setToken] = useState<string | null>(null);
   
-    useEffect(() => {
-      const fetchToken = async () => {
-        try {
-          const res = await fetch("/api/auth/token", {
-            method: "GET",
-            credentials: "include", // Ensures cookies are sent
-          });
-  
-          const data = await res.json();
-          if (data.token) {
-            setToken(data.token);
-            router.push("/dashboard"); // Redirect if token exists
-          }
-        } catch (error) {
-          console.error("Error fetching token:", error);
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", {
+          method: "GET",
+          credentials: "include", // Ensures cookies are sent
+        });
+
+        const data = await res.json();
+        if (data.token) {
+          setToken(data.token);
+          router.push("/dashboard"); // Redirect if token exists
         }
-      };
-  
-      fetchToken();
-    }, [router]);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+      }
+    };
+
+    fetchToken();
+  }, [router]);
     
   const checkPasswordStrength = (password: string) => {
     if (!password) {
@@ -215,232 +215,225 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-0">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">
-          Join <span className="text-blue-600">Goggins</span>
-        </h1>
-        <p className="text-sm text-gray-600 text-center mt-2">
-          Start organizing your notes like never before!
-        </p>
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-md overflow-hidden md:shadow-lg border border-gray-200">
+        <div className="p-6 sm:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 text-center">
+            Join <span className="text-blue-600">Goggins</span>
+          </h1>
+          <p className="text-sm text-gray-600 text-center mt-1">
+            Start organizing your notes like never before!
+          </p>
 
-        {/* Sign-Up Form */}
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6" encType="multipart/form-data">
-          {/* Avatar Upload - Improved Professional Version */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Profile Picture
-            </label>
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-32 h-32 rounded-full relative overflow-hidden border-2 border-dashed hover:border-blue-400 cursor-pointer transition-colors duration-300 mb-4 group"
-              >
-                {avatarPreview ? (
-                  <div className="relative w-full h-full">
-                    <Image 
-                      src={avatarPreview} 
-                      alt="Avatar preview" 
-                      fill
-                      className="object-cover rounded-full"
-                    />
-                    <div 
-                      className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full flex items-center justify-center"
-                      onClick={triggerFileInput}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                ) : (
+          {/* Sign-Up Form */}
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:space-y-5" encType="multipart/form-data">
+            {/* Two-column layout for wider screens */}
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+              {/* Avatar Upload - Left Column */}
+              <div className="flex flex-col items-center justify-center md:border-r md:border-gray-100 md:pr-4">
+                <div className="flex flex-col items-center">
                   <div 
-                    className="w-full h-full bg-gray-100 flex flex-col items-center justify-center rounded-full"
-                    onClick={triggerFileInput}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full relative overflow-hidden border-2 border-dashed hover:border-blue-400 cursor-pointer transition-colors mb-3 group"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-xs mt-2 text-gray-500">Click to upload</span>
+                    {avatarPreview ? (
+                      <div className="relative w-full h-full">
+                        <Image 
+                          src={avatarPreview} 
+                          alt="Avatar preview" 
+                          fill
+                          className="object-cover rounded-full"
+                        />
+                        <div 
+                          className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full flex items-center justify-center"
+                          onClick={triggerFileInput}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="w-full h-full bg-gray-100 flex flex-col items-center justify-center rounded-full"
+                        onClick={triggerFileInput}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-xs mt-1 text-gray-500">Upload photo</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    id="avatar"
+                    name="avatar"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                  
+                  <div className="flex space-x-3">
+                    <button 
+                      type="button" 
+                      onClick={triggerFileInput}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-500 flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                      </svg>
+                      {avatarPreview ? "Change" : "Upload"}
+                    </button>
+                    
+                    {avatarPreview && (
+                      <button 
+                        type="button" 
+                        onClick={removeAvatar}
+                        className="text-xs font-medium text-red-600 hover:text-red-500 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Right Column - Personal Info */}
+              <div>
+                <div className="space-y-3">
+                  {/* Name Input */}
+                  <div>
+                    <label htmlFor="firstName" className="block text-xs font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={user.firstName}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+                      placeholder="Enter your name"
+                      required
+                    />
+                  </div>
+
+                  {/* Phone Number Input */}
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-xs font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      value={user.phoneNumber}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+                      placeholder="Enter your phone number"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Full Width Fields */}
+            {/* Email Input */}
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
               <input
-                ref={fileInputRef}
-                type="file"
-                id="avatar"
-                name="avatar"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="hidden"
+                type="email"
+                id="email"
+                name="email"
+                value={user.email}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            {/* Password Input with Strength Meter */}
+            <div>
+              <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={user.password}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
+                placeholder="••••••••"
+                required
               />
               
-              <div className="flex space-x-3">
-                <button 
-                  type="button" 
-                  onClick={triggerFileInput}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                  </svg>
-                  {avatarPreview ? "Change" : "Upload"}
-                </button>
-                
-                {avatarPreview && (
-                  <button 
-                    type="button" 
-                    onClick={removeAvatar}
-                    className="text-sm font-medium text-red-600 hover:text-red-500 flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Remove
-                  </button>
-                )}
-              </div>
-              
-              {avatar && (
-                <p className="text-xs text-gray-500 mt-2">
-                  {avatar.name} ({Math.round(avatar.size / 1024)}KB)
-                </p>
+              {/* Password Strength Indicator */}
+              {user.password && (
+                <div className="mt-2">
+                  <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${getPasswordStrengthColor()} transition-all duration-300 ease-in-out`}
+                      style={{ 
+                        width: passwordStrength === "weak" ? "33%" : 
+                              passwordStrength === "medium" ? "66%" : 
+                              passwordStrength === "strong" ? "100%" : "0%" 
+                      }}
+                    ></div>
+                  </div>
+                  <p className={`text-xs mt-1 ${
+                    passwordStrength === "weak" ? "text-red-600" : 
+                    passwordStrength === "medium" ? "text-yellow-600" : 
+                    passwordStrength === "strong" ? "text-green-600" : ""
+                  }`}>
+                    {getPasswordStrengthMessage()}
+                  </p>
+                  
+                </div>
               )}
-              
-              <p className="text-xs text-gray-500 mt-2">
-                Recommended: Square image, at least 200x200px
-              </p>
             </div>
-          </div>
 
-          {/* Phone Number Input */}
-          <div>
-            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-600 mb-2">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={user.phoneNumber}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
-              placeholder="Enter your phone number"
-              required
-            />
-          </div>
+            {/* Error Message */}
+            {error && <div className="p-2 bg-red-50 text-red-600 rounded-md text-xs">{error}</div>}
 
-          {/* Name Input */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
-              Name
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={user.firstName}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
-              placeholder="Enter your name"
-              required
-            />
-          </div>
-
-          {/* Email Input */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={user.email}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          {/* Password Input with Strength Meter */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={user.password}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors"
-              placeholder="••••••••"
-              required
-            />
-            
-            {/* Password Strength Indicator */}
-            {user.password && (
-              <div className="mt-2">
-                <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${getPasswordStrengthColor()} transition-all duration-300 ease-in-out`}
-                    style={{ 
-                      width: passwordStrength === "weak" ? "33%" : 
-                             passwordStrength === "medium" ? "66%" : 
-                             passwordStrength === "strong" ? "100%" : "0%" 
-                    }}
-                  ></div>
+            {/* Sign-Up Button */}
+            <button
+              type="submit"
+              disabled={loading || passwordStrength !== "strong"}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating Account...
                 </div>
-                <p className={`text-xs mt-1 ${
-                  passwordStrength === "weak" ? "text-red-600" : 
-                  passwordStrength === "medium" ? "text-yellow-600" : 
-                  passwordStrength === "strong" ? "text-green-600" : ""
-                }`}>
-                  {getPasswordStrengthMessage()}
-                </p>
-                
-                {/* Password Requirements */}
-                <div className="mt-2 text-xs text-gray-600">
-                  <p>Password must contain:</p>
-                  <ul className="list-disc pl-5 mt-1">
-                    <li className={user.password.length >= 8 ? "text-green-600" : ""}>At least 8 characters</li>
-                    <li className={/[A-Z]/.test(user.password) ? "text-green-600" : ""}>Upper case letters (A-Z)</li>
-                    <li className={/[a-z]/.test(user.password) ? "text-green-600" : ""}>Lower case letters (a-z)</li>
-                    <li className={/[0-9]/.test(user.password) ? "text-green-600" : ""}>Numbers (0-9)</li>
-                    <li className={/[^A-Za-z0-9]/.test(user.password) ? "text-green-600" : ""}>Special characters (!@#$%^&*)</li>
-                  </ul>
-                </div>
-              </div>
-            )}
+              ) : "Sign Up"}
+            </button>
+          </form>
+
+          {/* Login & Home Links */}
+          <div className="text-center mt-5">
+            <p className="text-xs text-gray-600">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                Log In
+              </Link>
+            </p>
+
           </div>
-
-          {/* Error Message */}
-          {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
-
-          {/* Sign-Up Button */}
-          <button
-            type="submit"
-            disabled={loading || passwordStrength !== "strong"}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating..." : "Sign Up"}
-          </button>
-        </form>
-
-        {/* Login & Home Links */}
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-              Log In
-            </Link>
-          </p>
-          <Link href="/" className="inline-block text-xs px-3 py-1 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors mt-2">
-            Back to Home
-          </Link>
         </div>
       </div>
     </div>
