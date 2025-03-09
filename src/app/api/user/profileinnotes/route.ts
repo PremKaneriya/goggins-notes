@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Count user's notes
-    const totalNotes = await Note.countDocuments({ userId: user._id });
+    const totalNotes = await Note.countDocuments({ userId: user._id, is_deleted: false });
     
     // Return user data with avatar URL (now Cloudinary URL)
     return NextResponse.json({
