@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, LogOut, FileText, Settings, Phone, Badge, User } from "lucide-react";
 
 // Define a type for the user data
 type UserProfile = {
@@ -71,10 +71,10 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-          <p className="text-gray-500">Loading your profile...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
+          <p className="text-slate-600">Loading your profile...</p>
         </div>
       </div>
     );
@@ -83,10 +83,11 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white px-4">
-        <div className="text-center max-w-sm">
-          <h2 className="text-xl font-medium text-gray-800 mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-4 text-sm">Please log in again to access your profile.</p>
-          <Link href="/login" className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm">
+        <div className="text-center max-w-sm p-8 rounded-xl shadow-lg border border-slate-100">
+          <User className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Profile Not Found</h2>
+          <p className="text-slate-600 mb-6">Please log in again to access your profile.</p>
+          <Link href="/login" className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
             Login
           </Link>
         </div>
@@ -98,109 +99,129 @@ export default function Profile() {
   const hasValidAvatar = user.avatar && user.avatar.trim() !== "" && !avatarError;
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4">
+    <div className="min-h-screen bg-slate-50">
       <Toaster position="top-center" />
       
-      <div className="max-w-lg mx-auto py-8 px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">
-            ← Back
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header with navigation */}
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/dashboard" className="flex items-center text-sm text-slate-600 hover:text-indigo-600 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            <span>Back</span>
           </Link>
           <button 
             onClick={handleLogout}
-            className="text-sm text-gray-500 hover:text-red-500"
+            className="flex items-center text-sm text-slate-600 hover:text-red-600 transition-colors"
           >
-            Logout
+            <LogOut className="w-4 h-4 mr-1" />
+            <span>Logout</span>
           </button>
         </div>
 
-        {/* Profile header */}
-              <div className="flex items-center mb-8">
-              <div 
-                  className="relative w-20 h-20 border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors bg-gray-50 rounded-full overflow-hidden"
-          >
-            {hasValidAvatar ? (
-              <Image 
-                src={user.avatar} 
-                alt="Avatar preview" 
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-20 h-20 bg-gray-200 rounded-full">
-                <div className="flex items-center justify-center w-full h-full bg-gray-400 rounded-full">
-                  <Image
-                  src={`https://www.svgrepo.com/show/382106/male-avatar-boy-face-man-user-9.svg`}
-                  alt="Avatar preview" 
-                  fill
-                  className="object-cover"
-                />
+        {/* Main content */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left column - Profile info */}
+          <div className="md:col-span-1">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="relative w-24 h-24 mb-4 group">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 p-1">
+                    {hasValidAvatar ? (
+                      <Image 
+                        src={user.avatar} 
+                        alt="Profile picture" 
+                        fill
+                        className="rounded-full object-cover"
+                        onError={() => setAvatarError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                        <Image
+                          src={`https://www.svgrepo.com/show/382106/male-avatar-boy-face-man-user-9.svg`}
+                          alt="Default avatar" 
+                          fill
+                          className="rounded-full object-cover p-2"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <h1 className="text-2xl font-bold text-slate-800">{user.firstName}</h1>
+                <p className="text-slate-500">{user.email}</p>
+
+                {/* Status badge */}
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                  Active Account
                 </div>
               </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-xl ml-4 font-medium text-gray-900">{user.firstName}</h1>
-            <p className="text-sm ml-4 text-gray-500">{user.email}</p>
-          </div>
-        </div>
-        
-        {/* Info cards */}
-        <div className="space-y-4 mb-8">
-          <div className="p-4 border border-gray-100 rounded-lg bg-gray-50">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Phone</span>
-              <span className="text-sm font-medium">{user.phoneNumber}</span>
             </div>
           </div>
-          
-          <div className="p-4 border border-gray-100 rounded-lg bg-gray-50">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Notes</span>
-              <span className="text-sm font-medium">{user.totalNotes}</span>
+
+          {/* Right column - Details and actions */}
+          <div className="md:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">Account Information</h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center p-3 bg-slate-50 rounded-lg">
+                  <Phone className="w-5 h-5 text-slate-400 mr-3" />
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Phone Number</p>
+                    <p className="text-sm font-medium">{user.phoneNumber}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-3 bg-slate-50 rounded-lg">
+                  <FileText className="w-5 h-5 text-slate-400 mr-3" />
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Notes Created</p>
+                    <p className="text-sm font-medium">{user.totalNotes}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-3 bg-slate-50 rounded-lg">
+                  <Badge className="w-5 h-5 text-slate-400 mr-3" />
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Member Since</p>
+                    <p className="text-sm font-medium">January 2023</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link 
+                href="/notes" 
+                className="flex items-center justify-center py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                View My Notes
+              </Link>
+              
+              <Link 
+                href="/settings" 
+                className="flex items-center justify-center py-3 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Account Settings
+              </Link>
             </div>
           </div>
-          
-          <div className="p-4 border border-gray-100 rounded-lg bg-gray-50">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Status</span>
-              <span className="text-sm font-medium text-green-500 flex items-center">
-                <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                Active
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Action buttons */}
-        <div className="space-y-3">
-          <Link 
-            href="/notes" 
-            className="block w-full py-3 bg-blue-500 text-white text-center rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-          >
-            View My Notes
-          </Link>
-          
-          <Link 
-            href="/settings" 
-            className="block w-full py-3 bg-gray-100 text-gray-800 text-center rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-          >
-            Account Settings
-          </Link>
         </div>
       </div>
+
       {/* Footer */}
-      <footer className="border-t border-black py-4 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-center">
-            <div className="text-sm text-gray-500 text-center">
-            © 2023 Goggins Notes. All rights reserved.
+      <footer className="border-t border-slate-200 mt-12">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="text-sm text-slate-500 mb-4 md:mb-0">
+              © 2023 Goggins Notes. All rights reserved.
             </div>
-        </div>
-        </footer>
-      <footer className=" py-4 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-center">
-          <div className="text-sm text-gray-500 text-center">
-            Contant owner : <a href="https://github.com/Abhishek-07" className="text-blue-500 hover:text-blue-600 transition-colors">pre-dev</a>
+            <div className="text-sm text-slate-500">
+              Contact owner: <a href="https://github.com/PremKaneriya" className="text-indigo-600 hover:text-indigo-700 transition-colors">pre-dev</a>
+            </div>
           </div>
         </div>
       </footer>

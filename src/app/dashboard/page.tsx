@@ -15,6 +15,8 @@ import {
   Check,
   LogOut,
   Copy,
+  Save,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -367,7 +369,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   onDelete,
   isCreateMode = false,
 }) => {
-  const [isEditing, setIsEditing] = useState(isCreateMode ? true : false);
+  const [isEditing, setIsEditing] = useState(isCreateMode);
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -376,6 +378,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
     note?.updatedAt || note?.createdAt || new Date().toISOString()
   );
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -389,7 +393,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
         note.updatedAt || note.createdAt || new Date().toISOString()
       );
       setHasChanges(false);
-      setIsEditing(isCreateMode ? true : false);
+      setIsEditing(isCreateMode);
     } else {
       setTitle("");
       setContent("");
@@ -426,18 +430,13 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
     try {
       setIsSaving(true);
-
       const currentTime = new Date().toISOString();
-
-      // Update lastEditTime BEFORE the API call
       setLastEditTime(currentTime);
-
-      await onSave(note._id, title, content, currentTime);
+      await onSave(note?._id || '', title, content, currentTime);
 
       if (!isCreateMode) {
         setIsEditing(false);
       }
-
       setHasChanges(false);
     } catch (err) {
       console.error("Failed to save note:", err);
@@ -448,11 +447,18 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
   const handleClose = () => {
     if (hasChanges) {
-      if (window.confirm("You have unsaved changes. Save before closing?")) {
-        handleSave();
-      }
+      setShowUnsavedWarning(true);
+    } else {
+      onClose();
     }
-    onClose();
+  };
+
+  const handleDelete = () => {
+    if (note && onDelete) {
+      onDelete(note._id);
+      setShowDeleteConfirmation(false);
+      onClose();
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -474,7 +480,6 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
     navigator.clipboard.writeText(formattedContent).then(
       () => {
         setCopySuccess(true);
-        // Reset the success message after 2 seconds
         setTimeout(() => setCopySuccess(false), 2000);
       },
       (err) => {
@@ -486,22 +491,20 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape key to cancel editing or close the note
+      // Escape key to cancel editing, modals, or close the note
       if (e.key === "Escape") {
-        if (isEditing && !isCreateMode) {
+        if (showDeleteConfirmation) {
+          setShowDeleteConfirmation(false);
+        } else if (showUnsavedWarning) {
+          setShowUnsavedWarning(false);
+        } else if (isEditing && !isCreateMode) {
           if (hasChanges) {
-            if (window.confirm("Discard changes?")) {
-              if (note) {
-                setTitle(note.title);
-                setContent(note.content);
-              }
-              setIsEditing(false);
-            }
+            setShowUnsavedWarning(true);
           } else {
             setIsEditing(false);
           }
         } else {
-          onClose();
+          handleClose();
         }
       }
 
@@ -509,7 +512,9 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       if (
         (e.ctrlKey || e.metaKey) &&
         e.key === "Enter" &&
-        (isEditing || isCreateMode)
+        (isEditing || isCreateMode) &&
+        !showDeleteConfirmation &&
+        !showUnsavedWarning
       ) {
         handleSave();
       }
@@ -519,6 +524,8 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
         e.key === "e" &&
         !isEditing &&
         !isCreateMode &&
+        !showDeleteConfirmation &&
+        !showUnsavedWarning &&
         !(e.target instanceof HTMLInputElement) &&
         !(e.target instanceof HTMLTextAreaElement)
       ) {
@@ -528,42 +535,113 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
     };
 
     document.addEventListener("keydown", handleKeyDown);
-
-    // Prevent scrolling of background content
     document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode]);
+  }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode, showUnsavedWarning, showDeleteConfirmation]);
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={(e) => {
-        // Only handle clicks directly on the backdrop, not bubbled events
-        if (e.target === e.currentTarget && (isEditing || isCreateMode)) {
-          // Check if save is possible (has title and content)
-          if (title.trim() && content.trim() && !isSaving) {
-            handleSave();
-          }
-        }
-      }}
-    >
-      <div
-        className="bg-white w-full h-full flex flex-col animate-in zoom-in-50 duration-200 sm:rounded-xl sm:max-w-5xl sm:h-[90vh] sm:m-4"
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
+      {/* Unsaved Changes Dialog */}
+      {showUnsavedWarning && (
+        <div className="absolute z-10 bg-white rounded-lg shadow-xl p-6 max-w-md mx-auto animate-in zoom-in-95 duration-150">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Unsaved Changes</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            You have unsaved changes. What would you like to do?
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setShowUnsavedWarning(false);
+                onClose();
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Discard
+            </button>
+            <button
+              onClick={() => {
+                setShowUnsavedWarning(false);
+                handleSave();
+                onClose();
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Save & Exit
+            </button>
+            <button
+              onClick={() => setShowUnsavedWarning(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Continue Editing
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirmation && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/2 -sm animate-in fade-in-0 duration-200">
+    <div className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4 transform transition-all animate-in zoom-in-90 duration-200">
+      {/* Close Button */}
+      <button
+        onClick={() => setShowDeleteConfirmation(false)}
+        className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <X size={20} />
+      </button>
+
+      {/* Warning Icon */}
+      <div className="flex justify-center mb-4">
+        <div className="p-2 bg-red-100 rounded-full">
+          <AlertTriangle size={24} className="text-red-600" />
+        </div>
+      </div>
+
+      {/* Title and Message */}
+      <h3 className="text-xl font-semibold text-gray-900 text-center mb-2">
+        Confirm Deletion
+      </h3>
+      <p className="text-sm text-gray-500 text-center mb-6">
+        Are you sure you want to delete this note? This action is permanent and cannot be reversed.
+      </p>
+
+      {/* Buttons */}
+      <div className="flex justify-between gap-4">
+        <button
+          onClick={() => setShowDeleteConfirmation(false)}
+          className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDelete}
+          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 flex items-center justify-center gap-2"
+        >
+          <Trash2 size={16} />
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+      <div 
+        className="bg-white w-full h-full flex flex-col animate-in zoom-in-50 duration-200 sm:rounded-xl sm:max-w-5xl sm:h-[90vh] sm:m-4 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Section */}
-        <div className="flex items-center justify-between p-3 border-b">
+        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
           <div className="flex items-center flex-1 min-w-0">
             <button
               onClick={handleClose}
-              className="mr-2 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              className="mr-3 p-2 rounded-full hover:bg-gray-200 text-gray-600 transition-colors"
               aria-label="Close full view"
             >
-              <ArrowLeft size={16} className="sm:h-5 sm:w-5" />
+              <ArrowLeft size={18} />
             </button>
 
             {isEditing || isCreateMode ? (
@@ -572,13 +650,13 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-base sm:text-xl font-semibold text-gray-800 w-full border-b border-blue-400 focus:outline-none focus:border-blue-600 px-1 py-0.5 truncate"
+                className="text-xl font-medium text-gray-800 w-full border-0 border-b-2 border-blue-400 focus:outline-none focus:border-blue-600 bg-transparent px-2 py-1"
                 placeholder="Note title"
               />
             ) : (
               <div className="w-full">
                 <h2
-                  className="text-base sm:text-xl font-semibold text-gray-800 cursor-text truncate relative group"
+                  className="text-xl font-medium text-gray-800 cursor-pointer truncate relative group px-2"
                   onClick={() => setIsEditing(true)}
                 >
                   {title}
@@ -588,9 +666,9 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 ml-2">
+          <div className="flex items-center gap-2 ml-2">
             {isEditing || isCreateMode ? (
-              <>
+              <div className="flex items-center gap-2">
                 {!isCreateMode && (
                   <button
                     onClick={() => {
@@ -600,34 +678,50 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                       }
                       setIsEditing(false);
                     }}
-                    className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-all"
                     aria-label="Cancel editing"
                     disabled={isSaving}
                   >
-                    <X size={14} className="sm:h-4 sm:w-4" />
+                    <X size={18} />
                   </button>
                 )}
                 <button
                   onClick={handleSave}
-                  className={`p-1 sm:p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center ${
-                    isSaving ? "opacity-75" : ""
-                  }`}
+                  className={`p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center gap-2 ${
+                    (!title.trim() || !content.trim()) ? "opacity-50 cursor-not-allowed" : ""
+                  } ${isSaving ? "opacity-75" : ""}`}
                   aria-label={isCreateMode ? "Create note" : "Save note"}
                   disabled={isSaving || !title.trim() || !content.trim()}
                 >
                   {isSaving ? (
-                    <Loader2 size={14} className="animate-spin sm:h-4 sm:w-4" />
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span className="hidden sm:inline">Saving...</span>
+                    </>
                   ) : (
-                    <Check size={14} className="sm:h-4 sm:w-4" />
+                    <>
+                      <Save size={18} />
+                      <span className="hidden sm:inline">Save</span>
+                    </>
                   )}
                 </button>
-              </>
+              </div>
             ) : (
-              <div className="flex">
+              <div className="flex items-center gap-2">
+                {/* Edit button */}
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-2"
+                  aria-label="Edit note"
+                >
+                  <Edit size={18} />
+                  <span className="hidden sm:inline text-sm">Edit</span>
+                </button>
+
                 {/* Copy button */}
                 <button
                   onClick={copyNoteToClipboard}
-                  className={`p-1 sm:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all mr-1 sm:mr-2 flex items-center gap-1 ${
+                  className={`p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-2 ${
                     copySuccess ? "text-green-600 bg-green-50" : ""
                   }`}
                   aria-label="Copy note"
@@ -635,13 +729,13 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 >
                   {copySuccess ? (
                     <>
-                      <Check size={14} className="sm:h-4 sm:w-4" />
-                      <span className="text-xs hidden sm:inline">Copied!</span>
+                      <Check size={18} />
+                      <span className="hidden sm:inline text-sm">Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy size={14} className="sm:h-4 sm:w-4" />
-                      <span className="text-xs hidden sm:inline">Copy</span>
+                      <Copy size={18} />
+                      <span className="hidden sm:inline text-sm">Copy</span>
                     </>
                   )}
                 </button>
@@ -649,14 +743,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
                 {/* Delete button */}
                 {onDelete && note && (
                   <button
-                    onClick={() => {
-                      onDelete(note._id);
-                      onClose();
-                    }}
-                    className="p-1 sm:p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    onClick={() => setShowDeleteConfirmation(true)}
+                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all flex items-center gap-2"
                     aria-label="Delete note"
                   >
-                    <Trash2 size={14} className="sm:h-4 sm:w-4" />
+                    <Trash2 size={18} />
+                    <span className="hidden sm:inline text-sm">Delete</span>
                   </button>
                 )}
               </div>
@@ -666,11 +758,10 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
 
         {/* Content Section - Made directly editable on tap */}
         <div
-          className="flex-1 overflow-y-auto p-3 sm:p-6"
+          className={`flex-1 overflow-y-auto p-4 sm:p-6 ${isEditing || isCreateMode ? 'bg-white' : 'bg-gray-50/50'}`}
           onClick={() => {
             if (!isEditing && !isCreateMode) {
               setIsEditing(true);
-              // Focus the textarea after a brief delay to allow state to update
               setTimeout(() => {
                 if (contentTextareaRef.current) {
                   contentTextareaRef.current.focus();
@@ -684,39 +775,42 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               ref={contentTextareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-sm sm:text-lg leading-relaxed"
-              placeholder="Note content"
+              className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 text-gray-800 text-lg leading-relaxed font-sans bg-white p-2"
+              placeholder="Start writing..."
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <div className="whitespace-pre-wrap font-sans text-gray-800 text-sm sm:text-lg leading-relaxed cursor-text relative group">
+            <div className="whitespace-pre-wrap font-sans text-gray-800 text-lg leading-relaxed cursor-pointer relative group p-2 rounded-lg hover:bg-white transition-colors">
               {content || (
                 <span className="text-gray-400">Tap to start writing...</span>
               )}
-              <span className="absolute inset-0 bg-gray-100 opacity-0 group-hover:opacity-10 transition-opacity rounded"></span>
             </div>
           )}
         </div>
 
         {/* Footer Section */}
-        <div className="p-2 sm:p-4 border-t text-xs text-gray-500">
+        <div className="p-4 border-t text-xs text-gray-500 bg-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center mb-2 sm:mb-0">
-              <Calendar
-                size={10}
-                className="mr-1 sm:mr-2 flex-shrink-0 sm:h-3 sm:w-3"
-              />
+              <Calendar size={14} className="mr-2 flex-shrink-0" />
               <span>
                 {isCreateMode
                   ? "New note"
                   : `Last edited: ${formatDate(lastEditTime)}`}
               </span>
+              {hasChanges && (
+                <span className="ml-2 text-amber-600 font-medium flex items-center">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full mr-1"></span>
+                  Unsaved changes
+                </span>
+              )}
             </div>
             
             {/* Keyboard shortcuts hint */}
             <div className="hidden sm:flex items-center gap-4 text-gray-400">
-              <span>Press <kbd className="px-1 py-0.5 rounded bg-gray-100">E</kbd> to edit</span>
-              <span>Press <kbd className="px-1 py-0.5 rounded bg-gray-100">Esc</kbd> to cancel</span>
+              <span>Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 font-mono text-xs shadow-sm">E</kbd> to edit</span>
+              <span>Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 font-mono text-xs shadow-sm">Esc</kbd> to cancel</span>
+              <span>Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 font-mono text-xs shadow-sm">Ctrl+Enter</kbd> to save</span>
             </div>
           </div>
         </div>
