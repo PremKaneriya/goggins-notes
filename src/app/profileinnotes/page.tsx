@@ -191,18 +191,10 @@ export default function Profile() {
             </div>
 
             {/* Action buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">  
               <Link 
-                href="/notes" 
-                className="flex items-center justify-center py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                View My Notes
-              </Link>
-              
-              <Link 
-                href="/settings" 
-                className="flex items-center justify-center py-3 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+                href="/account-settings" 
+                className="flex items-center justify-center py-3 px-4 bg-white border border-slate-900 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Account Settings
@@ -213,7 +205,7 @@ export default function Profile() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 mt-12">
+      <footer className="border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="text-sm text-slate-500 mb-4 md:mb-0">
