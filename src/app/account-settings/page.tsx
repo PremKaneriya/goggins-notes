@@ -272,28 +272,6 @@ export default function AccountSettings() {
                       </div>
                     </div>
                     
-                    {/* Email Field */}
-                    <div className="space-y-2">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email Address
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Mail className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={profile.email}
-                          onChange={handleChange}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-colors text-gray-900"
-                          placeholder="Enter your email address"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
                     {/* Phone Number Field */}
                     <div className="space-y-2">
                       <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">

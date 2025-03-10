@@ -34,7 +34,17 @@ const userSchema = new mongoose.Schema({
   firstName: {
       type: String,
       required: true
-  }
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationOTP: {
+    type: String
+  },
+  emailVerificationOTPExpiry: {
+    type: Date
+  },
 }, {
   timestamps: true,
 });
