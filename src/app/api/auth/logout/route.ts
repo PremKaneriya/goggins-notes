@@ -12,15 +12,24 @@ export async function POST(request: NextRequest) {
         console.log("userId", userId);
 
         if (!user) {
-            return new Response("User not found", { status: 404 });
+            return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
         }
 
-        const response = NextResponse.redirect(new URL("/login", request.url));
-        console.log("response", response);
+        // Create a response with JSON data
+        const response = NextResponse.json({ 
+            success: true, 
+            message: "Logged out successfully" 
+        });
+        
+        // Clear the token cookie
         response.cookies.delete("token");
-
+        
         return response;
     } catch (error) {
-        return new Response("Error logging out", { status: 500 });
+        console.error("Logout error:", error);
+        return NextResponse.json({ 
+            success: false, 
+            message: "Error logging out" 
+        }, { status: 500 });
     }
 }

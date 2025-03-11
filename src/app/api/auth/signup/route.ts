@@ -257,10 +257,13 @@ export async function POST(request: NextRequest) {
 
 
 // Add this new endpoint for OTP verification
+// Add this new endpoint for OTP verification
 export async function PUT(request: NextRequest) {
   try {
     const { userId, otp } = await request.json();
-    console.log(`Verifying OTP for user ID: ${userId}`, otp); // Log for debugging
+
+    console.log(`Verifying OTP for user ID: ${userId}`); // Log for debugging
+    console.log(`OTP: ${otp}`); // Log for debugging
 
     if (!userId || !otp) {
       return NextResponse.json(
@@ -288,8 +291,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Convert both to strings and trim whitespace for reliable comparison
+    const submittedOTP = String(otp).trim();
+    const storedOTP = String(userRecord.emailVerificationOTP).trim();    
     // Validate OTP
-    if (userRecord.emailVerificationOTP !== otp) {
+    if (submittedOTP !== storedOTP) {
       return NextResponse.json(
         { error: "Invalid OTP" },
         { status: 400 }
