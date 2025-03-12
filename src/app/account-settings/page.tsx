@@ -8,7 +8,7 @@ import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { 
   Loader2, ArrowLeft, LogOut, Phone, User, Mail, Save, 
-  Camera, Bell, Shield, CreditCard, HelpCircle 
+  Camera, Bell, Shield, CreditCard, HelpCircle, Trash2, AlertTriangle
 } from 'lucide-react';
 
 interface UserProfile {
@@ -26,8 +26,11 @@ export default function AccountSettings() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
     avatar: defaultAvatar,
@@ -121,6 +124,42 @@ export default function AccountSettings() {
   const handleLogout = () => {
     // Implement logout functionality
     router.push('/login');
+  };
+
+  const handleDeleteConfirmationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDeleteConfirmation(e.target.value);
+  };
+
+  const handleInitiateDelete = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (deleteConfirmation !== 'DELETE') {
+      toast.error('Please type DELETE to confirm account deletion');
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      
+      await axios.patch('/api/profile/account-settings/delete-account');
+      
+      toast.success('Your account has been successfully deleted');
+      
+      // Redirect to logout or home page after a short delay
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      toast.error('Failed to delete account. Please try again later.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -234,6 +273,19 @@ export default function AccountSettings() {
                       Help & Support
                     </button>
                   </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveTab('delete-account')}
+                      className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === 'delete-account' 
+                          ? 'bg-red-50 text-red-700' 
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
+                    >
+                      <Trash2 className="w-5 h-5 mr-3" />
+                      Delete Account
+                    </button>
+                  </li>
                 </ul>
               </nav>
             </div>
@@ -298,37 +350,6 @@ export default function AccountSettings() {
                   </div>
                 </div>
 
-                {/* Account Preferences */}
-                {/* <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                  <div className="px-6 py-5 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-800">Account Preferences</h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage your account preferences and settings.</p>
-                  </div>
-                  
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800">Email Notifications</h3>
-                        <p className="text-xs text-gray-500 mt-1">Receive email updates about your account activity</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                      </label>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-800">2-Factor Authentication</h3>
-                        <p className="text-xs text-gray-500 mt-1">Add an extra layer of security to your account</p>
-                      </div>
-                      <button type="button" className="text-sm text-indigo-600 font-medium hover:text-indigo-700">
-                        Configure
-                      </button>
-                    </div>
-                  </div>
-                </div> */}
-
                 {/* Action buttons */}
                 <div className="flex justify-end space-x-4">
                   <Link 
@@ -359,7 +380,89 @@ export default function AccountSettings() {
               </form>
             )}
             
-            {activeTab !== 'profile' && (
+            {activeTab === 'delete-account' && (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+                <div className="px-6 py-5 border-b border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-800">Delete Account</h2>
+                  <p className="text-sm text-gray-500 mt-1">Permanently delete your account and all associated data.</p>
+                </div>
+                
+                <div className="p-6">
+                  <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-red-500" aria-hidden="true" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">Warning: This action cannot be undone</h3>
+                        <div className="mt-2 text-sm text-red-700">
+                          <p>
+                            When you delete your account, all of your notes, personal information, and account history will be permanently removed from our system.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {!showDeleteConfirmation ? (
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-6">
+                        Are you sure you want to delete your account? This action is permanent and cannot be reversed.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleInitiateDelete}
+                        className="inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors"
+                      >
+                        Delete My Account
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleDeleteAccount}>
+                      <p className="text-sm text-gray-700 mb-4">
+                        To confirm deletion, please type <strong>DELETE</strong> in the field below:
+                      </p>
+                      <div className="mb-6">
+                        <input
+                          type="text"
+                          value={deleteConfirmation}
+                          onChange={handleDeleteConfirmationChange}
+                          className="block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-500 transition-colors text-gray-900"
+                          placeholder="Type DELETE to confirm"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setShowDeleteConfirmation(false)}
+                          className="flex items-center justify-center px-4 py-3 border border-gray-200 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                          disabled={isDeleting || deleteConfirmation !== 'DELETE'}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            'Permanently Delete Account'
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {(activeTab !== 'profile' && activeTab !== 'delete-account') && (
               <div className="bg-white rounded-xl shadow-sm p-6 text-center">
                 <div className="py-12">
                   <div className="bg-gray-50 inline-flex p-4 rounded-full mb-4">
