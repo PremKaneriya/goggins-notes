@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 400 });
     }
 
+    if (user.isAccountDeleted === true) {
+      return NextResponse.json({ error: "Account deleted, Please create new account" }, { status: 400 });
+    }
+
     const isPasswordCorrect = await bcryptjs.compare(password, user.password);
 
     if (!isPasswordCorrect) {

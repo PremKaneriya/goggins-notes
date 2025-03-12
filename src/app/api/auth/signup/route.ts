@@ -163,11 +163,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the email is already in use by a verified user
+    // Check if the email is already in use by a verified user who hasn't deleted their account
     const existingVerifiedUser = await User.findOne({
       email,
       isEmailVerified: true,
+      isAccountDeleted: { $ne: true }, // Exclude deleted accounts
     });
+
     if (existingVerifiedUser) {
       return NextResponse.json(
         { error: "Email is already in use" },
@@ -175,11 +177,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the phone number is already in use
+    // Check if the phone number is already in use by a non-deleted account
     const existingPhoneNumber = await User.findOne({
       phoneNumber,
       isEmailVerified: true,
+      isAccountDeleted: { $ne: true }, // Exclude deleted accounts
     });
+
     if (existingPhoneNumber) {
       return NextResponse.json(
         { error: "Phone number is already in use" },
@@ -187,59 +191,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate OTP - do this ONCE to ensure consistency
+    // Check for deleted account with this email
+    const deletedAccount = await User.findOne({
+      email,
+      isAccountDeleted: true,
+    });
+
+    // Generate OTP
     const otp = generateOTP();
-    console.log(`Generated OTP for ${email}: ${otp}`); // Log for debugging
-    
+    console.log(`Generated OTP for ${email}: ${otp}`);
+
     const otpExpiry = new Date();
     otpExpiry.setMinutes(otpExpiry.getMinutes() + 10); // OTP expires in 10 minutes
 
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
-    // Check for existing unverified user with this email
-    const existingUnverifiedUser = await User.findOne({
-      email,
-      isEmailVerified: false,
-    });
-
     let user;
 
-    if (existingUnverifiedUser) {
-      // Update the existing unverified user
-      existingUnverifiedUser.password = hashedPassword;
-      existingUnverifiedUser.phoneNumber = phoneNumber;
-      existingUnverifiedUser.firstName = firstName;
-      existingUnverifiedUser.avatar = avatar;
-      existingUnverifiedUser.emailVerificationOTP = otp;
-      existingUnverifiedUser.emailVerificationOTPExpiry = otpExpiry;
-      
-      // Save first to ensure database is updated
-      user = await existingUnverifiedUser.save();
-      console.log(`Updated user in database with OTP: ${otp}`);
-      
-      // Send OTP only after database update is confirmed
-      await sendOTPEmail(email, otp, firstName);
-    } else {
-      // Create a new user with verification fields
-      const newUser = new User({
-        email,
-        password: hashedPassword,
-        phoneNumber,
-        firstName,
-        avatar,
-        isEmailVerified: false,
-        emailVerificationOTP: otp,
-        emailVerificationOTPExpiry: otpExpiry,
-      });
+    if (deletedAccount) {
+      // Restore the deleted account with new information
+      deletedAccount.password = hashedPassword;
+      deletedAccount.phoneNumber = phoneNumber;
+      deletedAccount.firstName = firstName;
+      deletedAccount.avatar = avatar;
+      deletedAccount.isAccountDeleted = false; // Restore the account
+      deletedAccount.isEmailVerified = false; // Require verification again
+      deletedAccount.emailVerificationOTP = otp;
+      deletedAccount.emailVerificationOTPExpiry = otpExpiry;
 
       // Save first to ensure database is updated
-      user = await newUser.save();
-      console.log(`Created new user in database with OTP: ${otp}`);
-      
-      // Send OTP only after database update is confirmed
-      await sendOTPEmail(email, otp, firstName);
+      user = await deletedAccount.save();
+      console.log(`Restored deleted account with new data and OTP: ${otp}`);
+    } else {
+      // Check for existing unverified user with this email
+      const existingUnverifiedUser = await User.findOne({
+        email,
+        isEmailVerified: false,
+        isAccountDeleted: { $ne: true }, // Exclude deleted accounts
+      });
+
+      if (existingUnverifiedUser) {
+        // Update the existing unverified user
+        existingUnverifiedUser.password = hashedPassword;
+        existingUnverifiedUser.phoneNumber = phoneNumber;
+        existingUnverifiedUser.firstName = firstName;
+        existingUnverifiedUser.avatar = avatar;
+        existingUnverifiedUser.emailVerificationOTP = otp;
+        existingUnverifiedUser.emailVerificationOTPExpiry = otpExpiry;
+
+        // Save first to ensure database is updated
+        user = await existingUnverifiedUser.save();
+        console.log(`Updated user in database with OTP: ${otp}`);
+      } else {
+        // Create a new user with verification fields
+        const newUser = new User({
+          email,
+          password: hashedPassword,
+          phoneNumber,
+          firstName,
+          avatar,
+          isEmailVerified: false,
+          emailVerificationOTP: otp,
+          emailVerificationOTPExpiry: otpExpiry,
+          isAccountDeleted: false, // Explicitly set as not deleted
+        });
+
+        // Save first to ensure database is updated
+        user = await newUser.save();
+        console.log(`Created new user in database with OTP: ${otp}`);
+      }
     }
+
+    // Send OTP after database update is confirmed
+    await sendOTPEmail(email, otp, firstName);
 
     return NextResponse.json(
       {
@@ -254,7 +279,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 
 // Add this new endpoint for OTP verification
 // Add this new endpoint for OTP verification
@@ -274,12 +298,9 @@ export async function PUT(request: NextRequest) {
 
     // Find the user by ID
     const userRecord = await User.findById(userId);
-    
+
     if (!userRecord) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if OTP is expired
@@ -293,20 +314,17 @@ export async function PUT(request: NextRequest) {
 
     // Convert both to strings and trim whitespace for reliable comparison
     const submittedOTP = String(otp).trim();
-    const storedOTP = String(userRecord.emailVerificationOTP).trim();    
+    const storedOTP = String(userRecord.emailVerificationOTP).trim();
     // Validate OTP
     if (submittedOTP !== storedOTP) {
-      return NextResponse.json(
-        { error: "Invalid OTP" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid OTP" }, { status: 400 });
     }
 
     // Update user verification status
     userRecord.isEmailVerified = true;
     userRecord.emailVerificationOTP = undefined;
     userRecord.emailVerificationOTPExpiry = undefined;
-    
+
     await userRecord.save();
 
     return NextResponse.json(
@@ -326,39 +344,33 @@ export async function PUT(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { email } = await request.json();
-    
+
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Find the user by email
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Generate new OTP
     const otp = generateOTP();
     console.log(`Resending OTP for ${email}: ${otp}`); // Log for debugging
-    
+
     const otpExpiry = new Date();
     otpExpiry.setMinutes(otpExpiry.getMinutes() + 10); // OTP expires in 10 minutes
 
     // Update user with new OTP
     user.emailVerificationOTP = otp;
     user.emailVerificationOTPExpiry = otpExpiry;
-    
+
     // Save first to ensure database is updated before sending email
     await user.save();
     console.log(`Updated user in database with new OTP: ${otp}`);
-    
+
     // Send OTP only after database update is confirmed
     await sendOTPEmail(email, otp, user.firstName);
 
@@ -374,4 +386,3 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-

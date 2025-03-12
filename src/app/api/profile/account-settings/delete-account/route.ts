@@ -1,6 +1,7 @@
 import { getDataFromToken } from "@/utils/GetDataFromToken";
 import { NextRequest, NextResponse } from "next/server";
 import User from "../../../../../../models/User.Model";
+import Note from "../../../../../../models/Notes.Model";
 
 export async function PATCH(request: NextRequest) {
     try {
@@ -9,6 +10,11 @@ export async function PATCH(request: NextRequest) {
         const user = await User.findByIdAndUpdate(userId, {
             isAccountDeleted: true
         });
+
+        await Note.updateMany(
+            { userId: userId },
+            { is_deleted: true }
+        )
 
         const response = NextResponse.json({ 
             success: true,
