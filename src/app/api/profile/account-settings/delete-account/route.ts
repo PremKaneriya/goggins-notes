@@ -15,6 +15,8 @@ export async function PATCH(request: NextRequest) {
             message: "Account deleted successfully"
         });
 
+        response.cookies.delete("token");
+
         return response;
     } catch (error) {
         return NextResponse.json({ error });
