@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
         firstName: user.firstName,
         email: user.email,
         avatar: user.avatar, // Now directly using Cloudinary URL
-        phoneNumber: user.phoneNumber,
         totalNotes
       }
     });

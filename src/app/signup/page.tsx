@@ -12,20 +12,17 @@ export default function Signup() {
   const [user, setUser] = useState({
     email: "",
     password: "",
-    phoneNumber: "",
     firstName: "",
-    countryCode: "+91", // Default country code
+    confirmPassword: "",
   });
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState<
     "empty" | "weak" | "medium" | "strong"
   >("empty");
   const [token, setToken] = useState<string | null>(null);
-  const [showCountryList, setShowCountryList] = useState(false);
 
   // Added userId state to store the user ID from signup response
   const [userId, setUserId] = useState("");
@@ -35,7 +32,8 @@ export default function Signup() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpMessage, setOtpMessage] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // OTP input handlers
   const handleChange = (element: HTMLInputElement, index: number) => {
     if (isNaN(parseInt(element.value))) return;
@@ -178,37 +176,6 @@ export default function Signup() {
     }
   };
 
-  // List of common country codes with phone length validation
-  const countryCodes = [
-    { code: "+1", country: "US/Canada", maxLength: 10 },
-    { code: "+44", country: "UK", maxLength: 10 },
-    { code: "+49", country: "Germany", maxLength: 11 },
-    { code: "+33", country: "France", maxLength: 9 },
-    { code: "+61", country: "Australia", maxLength: 9 },
-    { code: "+81", country: "Japan", maxLength: 10 },
-    { code: "+86", country: "China", maxLength: 11 },
-    { code: "+91", country: "India", maxLength: 10 },
-    { code: "+52", country: "Mexico", maxLength: 10 },
-    { code: "+55", country: "Brazil", maxLength: 9 },
-    { code: "+27", country: "South Africa", maxLength: 9 },
-    { code: "+82", country: "South Korea", maxLength: 10 },
-    { code: "+39", country: "Italy", maxLength: 10 },
-    { code: "+34", country: "Spain", maxLength: 9 },
-    { code: "+7", country: "Russia", maxLength: 10 },
-    { code: "+60", country: "Malaysia", maxLength: 9 },
-    { code: "+65", country: "Singapore", maxLength: 8 },
-    { code: "+971", country: "UAE", maxLength: 9 },
-    { code: "+966", country: "Saudi Arabia", maxLength: 9 },
-    { code: "+20", country: "Egypt", maxLength: 10 },
-  ];
-
-  // Get currently selected country code info
-  const getCurrentCountryInfo = () => {
-    return (
-      countryCodes.find((c) => c.code === user.countryCode) || countryCodes[0]
-    );
-  };
-
   // Redirect if already authenticated
   useEffect(() => {
     const fetchToken = async () => {
@@ -230,21 +197,6 @@ export default function Signup() {
 
     fetchToken();
   }, [router]);
-
-  // Close country dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        showCountryList &&
-        !(event.target as Element).closest(".country-dropdown")
-      ) {
-        setShowCountryList(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showCountryList]);
 
   const checkPasswordStrength = (password: string) => {
     if (!password) {
@@ -280,54 +232,10 @@ export default function Signup() {
     setPasswordStrength(checkPasswordStrength(user.password));
   }, [user.password]);
 
-  // Validate phone number based on country code
-  const validatePhoneNumber = (number: string, countryCode: string) => {
-    const countryInfo = countryCodes.find((c) => c.code === countryCode);
-    if (!countryInfo) return false;
-
-    // Allow only numbers
-    if (!/^\d+$/.test(number)) {
-      setPhoneError("Phone number should contain only digits");
-      return false;
-    }
-
-    // Check if length matches country requirements
-    if (number.length !== countryInfo.maxLength) {
-      setPhoneError(
-        `Phone number for ${countryInfo.country} should be exactly ${countryInfo.maxLength} digits`
-      );
-      return false;
-    }
-
-    setPhoneError("");
-    return true;
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    if (name === "phoneNumber") {
-      // Allow only numbers and restrict to max length based on country code
-      const countryInfo = getCurrentCountryInfo();
-      const numericValue = value.replace(/\D/g, "");
-
-      if (numericValue.length <= countryInfo.maxLength) {
-        setUser((prev) => ({ ...prev, [name]: numericValue }));
-        validatePhoneNumber(numericValue, user.countryCode);
-      }
-    } else {
-      setUser((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const setCountryCode = (code: string) => {
-    setUser((prev) => {
-      // Clear phone validation error when changing country
-      setPhoneError("");
-      // Clear phone number when changing country to avoid validation issues
-      return { ...prev, countryCode: code, phoneNumber: "" };
-    });
-    setShowCountryList(false);
+    setUser((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -375,12 +283,6 @@ export default function Signup() {
       return;
     }
 
-    // Validate phone number
-    if (!validatePhoneNumber(user.phoneNumber, user.countryCode)) {
-      toast.error("Please enter a valid phone number");
-      return;
-    }
-
     setLoading(true);
     setError("");
 
@@ -397,9 +299,6 @@ export default function Signup() {
       Object.entries(user).forEach(([key, value]) => {
         formData.append(key, value);
       });
-
-      // Combine country code with phone number
-      formData.set("phoneNumber", `${user.countryCode}${user.phoneNumber}`);
 
       // Append avatar if available
       if (avatar) {
@@ -660,109 +559,7 @@ export default function Signup() {
                   />
                 </div>
 
-                {/* Phone Number with Country Code */}
-                <div>
-                  <label
-                    htmlFor="phoneNumber"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Phone Number
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {/* Country Code Dropdown */}
-                    <div className="relative col-span-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowCountryList(!showCountryList)}
-                        className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      >
-                        <span className="font-medium">{user.countryCode}</span>
-                        <svg
-                          className="w-4 h-4 ml-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </button>
-
-                      {/* Country Dropdown List */}
-                      {showCountryList && (
-                        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                            <div className="text-xs font-medium text-gray-500 px-2">
-                              Select Country
-                            </div>
-                          </div>
-                          <div className="p-1">
-                            {countryCodes.map((item) => (
-                              <button
-                                key={item.code}
-                                type="button"
-                                onClick={() => {
-                                  setCountryCode(item.code);
-                                  setShowCountryList(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors flex justify-between items-center ${
-                                  user.countryCode === item.code
-                                    ? "bg-blue-50 text-blue-600"
-                                    : ""
-                                }`}
-                              >
-                                <span>{item.country}</span>
-                                <span className="font-medium">{item.code}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Phone Number Input */}
-                    <input
-                      type="tel"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      value={user.phoneNumber}
-                      onChange={handleInputChange}
-                      className="col-span-2 px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder={`${
-                        getCurrentCountryInfo().maxLength
-                      } digits`}
-                      required
-                      inputMode="numeric"
-                      pattern="\d*"
-                      maxLength={getCurrentCountryInfo().maxLength}
-                    />
-                  </div>
-
-                  {/* Phone format hint */}
-                  <div className="flex justify-between mt-1">
-                    <p className="text-xs text-gray-500">
-                      {user.countryCode} + {getCurrentCountryInfo().maxLength}{" "}
-                      digits
-                    </p>
-                    {user.phoneNumber && (
-                      <p className="text-xs font-medium">
-                        {user.phoneNumber.length}/
-                        {getCurrentCountryInfo().maxLength}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Phone error message */}
-                  {phoneError && (
-                    <p className="text-xs text-red-500 mt-1">{phoneError}</p>
-                  )}
-                </div>
-
+                {/* Password Input with Strength Meter */}
                 {/* Password Input with Strength Meter */}
                 <div>
                   <label
@@ -771,51 +568,174 @@ export default function Signup() {
                   >
                     Password
                   </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      value={user.password}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Create a strong password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Password Strength Indicator */}
+                {user.password && (
+                  <div className="mt-2">
+                    <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${getPasswordStrengthColor()} transition-all duration-300 ease-in-out`}
+                        style={{
+                          width:
+                            passwordStrength === "weak"
+                              ? "33%"
+                              : passwordStrength === "medium"
+                              ? "66%"
+                              : passwordStrength === "strong"
+                              ? "100%"
+                              : "0%",
+                        }}
+                      ></div>
+                    </div>
+                    <p
+                      className={`text-xs mt-1 ${
+                        passwordStrength === "weak"
+                          ? "text-red-600"
+                          : passwordStrength === "medium"
+                          ? "text-yellow-600"
+                          : passwordStrength === "strong"
+                          ? "text-green-600"
+                          : ""
+                      }`}
+                    >
+                      {getPasswordStrengthMessage()}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirm Password Input */}
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Confirm Password
+                </label>
+                <div className="relative">
                   <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={user.password}
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={user.confirmPassword || ""}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Create a strong password"
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      user.password &&
+                      user.confirmPassword &&
+                      user.password !== user.confirmPassword
+                        ? "border-red-300"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Confirm your password"
                     required
                   />
-
-                  {/* Password Strength Indicator */}
-                  {user.password && (
-                    <div className="mt-2">
-                      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${getPasswordStrengthColor()} transition-all duration-300 ease-in-out`}
-                          style={{
-                            width:
-                              passwordStrength === "weak"
-                                ? "33%"
-                                : passwordStrength === "medium"
-                                ? "66%"
-                                : passwordStrength === "strong"
-                                ? "100%"
-                                : "0%",
-                          }}
-                        ></div>
-                      </div>
-                      <p
-                        className={`text-xs mt-1 ${
-                          passwordStrength === "weak"
-                            ? "text-red-600"
-                            : passwordStrength === "medium"
-                            ? "text-yellow-600"
-                            : passwordStrength === "strong"
-                            ? "text-green-600"
-                            : ""
-                        }`}
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        {getPasswordStrengthMessage()}
-                      </p>
-                    </div>
-                  )}
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
                 </div>
+                {user.password &&
+                  user.confirmPassword &&
+                  user.password !== user.confirmPassword && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Passwords do not match
+                    </p>
+                  )}
               </div>
 
               {/* Error Message */}
@@ -828,12 +748,7 @@ export default function Signup() {
               {/* Sign-Up Button */}
               <button
                 type="submit"
-                disabled={
-                  loading ||
-                  passwordStrength !== "strong" ||
-                  !!phoneError ||
-                  user.phoneNumber.length !== getCurrentCountryInfo().maxLength
-                }
+                disabled={loading || passwordStrength !== "strong"}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 focus:ring-4 focus:ring-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (

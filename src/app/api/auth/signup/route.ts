@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
     // Extract fields from FormData
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const phoneNumber = formData.get("phoneNumber") as string;
     const firstName = formData.get("firstName") as string;
 
     // Handle avatar file
@@ -142,13 +141,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    if (!phoneNumber) {
-      return NextResponse.json(
-        { error: "Phone number is required" },
-        { status: 400 }
-      );
-    }
-
     if (!firstName) {
       return NextResponse.json(
         { error: "First name is required" },
@@ -178,15 +170,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the phone number is already in use by a non-deleted account
-    const existingPhoneNumber = await User.findOne({
-      phoneNumber,
+    const existingUser = await User.findOne({
       isEmailVerified: true,
       isAccountDeleted: { $ne: true }, // Exclude deleted accounts
     });
 
-    if (existingPhoneNumber) {
+    if (existingUser) {
       return NextResponse.json(
-        { error: "Phone number is already in use" },
+        { error: "Account with this email already exists" },
         { status: 400 }
       );
     }
@@ -212,7 +203,6 @@ export async function POST(request: NextRequest) {
     if (deletedAccount) {
       // Restore the deleted account with new information
       deletedAccount.password = hashedPassword;
-      deletedAccount.phoneNumber = phoneNumber;
       deletedAccount.firstName = firstName;
       deletedAccount.avatar = avatar;
       deletedAccount.isAccountDeleted = false; // Restore the account
@@ -234,7 +224,6 @@ export async function POST(request: NextRequest) {
       if (existingUnverifiedUser) {
         // Update the existing unverified user
         existingUnverifiedUser.password = hashedPassword;
-        existingUnverifiedUser.phoneNumber = phoneNumber;
         existingUnverifiedUser.firstName = firstName;
         existingUnverifiedUser.avatar = avatar;
         existingUnverifiedUser.emailVerificationOTP = otp;
@@ -248,7 +237,6 @@ export async function POST(request: NextRequest) {
         const newUser = new User({
           email,
           password: hashedPassword,
-          phoneNumber,
           firstName,
           avatar,
           isEmailVerified: false,

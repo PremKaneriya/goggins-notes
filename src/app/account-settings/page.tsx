@@ -16,8 +16,6 @@ interface UserProfile {
   avatar: string;
   email: string;
   id: string;
-  phoneNumber: string;
-  totalNotesCreated?: number;
 }
 
 const defaultAvatar = '/default-avatar.png';
@@ -36,7 +34,6 @@ export default function AccountSettings() {
     avatar: defaultAvatar,
     email: '',
     id: '',
-    phoneNumber: '',
   });
 
   const hasValidAvatar = profile.avatar && profile.avatar !== defaultAvatar && !avatarError;
@@ -51,8 +48,6 @@ export default function AccountSettings() {
           avatar: response.data.avatar || defaultAvatar,
           email: response.data.email,
           id: response.data.id,
-          phoneNumber: response.data.phoneNumber || '',
-          totalNotesCreated: response.data.totalNotesCreated
         });
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -107,7 +102,6 @@ export default function AccountSettings() {
         firstName: profile.name,
         avatar: profile.avatar,
         email: profile.email,
-        phoneNumber: profile.phoneNumber,
       };
       
       await axios.put('/api/profile/account-settings', updateData);
@@ -235,12 +229,6 @@ export default function AccountSettings() {
                     <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                     Active Account
                   </div>
-                  
-                  {profile.totalNotesCreated !== undefined && (
-                    <div className="mt-4 text-sm text-gray-500">
-                      <span className="font-semibold text-gray-800">{profile.totalNotesCreated}</span> notes created
-                    </div>
-                  )}
                 </div>
               </div>
               
@@ -326,22 +314,7 @@ export default function AccountSettings() {
                     
                     {/* Phone Number Field */}
                     <div className="space-y-2">
-                      <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-                        Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
-                      </label>
                       <div className="relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Phone className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="tel"
-                          id="phoneNumber"
-                          name="phoneNumber"
-                          value={profile.phoneNumber}
-                          onChange={handleChange}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-colors text-gray-900"
-                          placeholder="Enter your phone number"
-                        />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         This will be used for account recovery and important notifications.

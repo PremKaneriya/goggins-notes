@@ -19,13 +19,12 @@ export async function PUT(
 
         // Get the data from request body
         const body = await req.json();
-        const { firstName, avatar, email, phoneNumber } = body;
+        const { firstName, avatar, email } = body;
 
         // Update user fields if provided
         if (firstName) user.firstName = firstName;
         if (avatar) user.avatar = avatar;
         if (email) user.email = email;
-        if (phoneNumber) user.phoneNumber = phoneNumber;
 
         // Save the updated user
         await user.save();
@@ -37,7 +36,6 @@ export async function PUT(
                 avatar: user.avatar,
                 email: user.email,
                 id: user._id,
-                phoneNumber: user.phoneNumber
             }
         }, { status: 200 });
 

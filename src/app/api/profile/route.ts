@@ -28,7 +28,6 @@ export async function GET(
             avatar: user.avatar,
             email: user.email,
             id: user._id,
-            phoneNumber: user.phoneNumber,
             totalNotesCreated: notes.length
         }, { status: 200 });
 

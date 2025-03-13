@@ -4,7 +4,6 @@ export interface MyUser {
   _id: mongoose.Types.ObjectId;
   firstName: string;
   avatar: string;
-  phoneNumber: number;
   email: string;
   password: string;
   createdAt?: Date;
@@ -16,11 +15,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
-  },
-  phoneNumber: {
-      type: Number,
-      required: true,
-      unique: true
   },
   email: {
       type: String,
