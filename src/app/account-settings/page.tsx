@@ -1,70 +1,83 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import axios from 'axios';
-import { toast, Toaster } from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import toast, { Toaster } from "react-hot-toast";
+import Link from "next/link";
 import { 
-  Loader2, ArrowLeft, LogOut, Phone, User, Mail, Save, 
-  Camera, Bell, Shield, CreditCard, HelpCircle, Trash2, AlertTriangle
-} from 'lucide-react';
+  Loader2, 
+  ArrowLeft, 
+  LogOut, 
+  User,
+  Mail,
+  Save,
+  Camera,
+  HelpCircle,
+  Trash2,
+  AlertTriangle
+} from "lucide-react";
 
-interface UserProfile {
-  name: string;
-  avatar: string;
+// Define a type for the user data
+type UserProfile = {
+  id: string; 
+  firstName: string;
   email: string;
-  id: string;
-}
-
-const defaultAvatar = '/default-avatar.png';
+  avatar: string;
+};
 
 export default function AccountSettings() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [profile, setProfile] = useState<UserProfile>({
-    name: '',
-    avatar: defaultAvatar,
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
     email: '',
-    id: '',
+    avatar: ''
   });
 
-  const hasValidAvatar = profile.avatar && profile.avatar !== defaultAvatar && !avatarError;
-
+  // Fetch user data on component mount
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchUserProfile = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get('/api/profile');
-        setProfile({
-          name: response.data.name,
-          avatar: response.data.avatar || defaultAvatar,
-          email: response.data.email,
-          id: response.data.id,
+        const response = await fetch("/api/user/profileinnotes");
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile");
+        }
+        
+        const data = await response.json();
+        setUser(data.user);
+        setFormData({
+          firstName: data.user.firstName,
+          email: data.user.email,
+          avatar: data.user.avatar || ''
         });
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        toast.error('Failed to load profile');
+        console.error("Error fetching profile:", error);
+        toast.error("Failed to load profile data");
+        router.push("/login");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
-  }, []);
+    fetchUserProfile();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
@@ -76,9 +89,9 @@ export default function AccountSettings() {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setProfile((prev) => ({
+          setFormData(prev => ({
             ...prev,
-            avatar: event.target?.result as string,
+            avatar: event.target?.result as string
           }));
           setAvatarError(false);
         }
@@ -98,26 +111,36 @@ export default function AccountSettings() {
     try {
       setUpdating(true);
       
-      const updateData = {
-        firstName: profile.name,
-        avatar: profile.avatar,
-        email: profile.email,
-      };
+      const response = await fetch("/api/profile/account-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData)
+      });
       
-      await axios.put('/api/profile/account-settings', updateData);
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
       
-      toast.success('Profile updated successfully');
+      // Update user state with new data
+      setUser(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          firstName: formData.firstName,
+          email: formData.email,
+          avatar: formData.avatar
+        };
+      });
+      
+      toast.success("Profile updated successfully");
     } catch (error) {
-      console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
+      console.error("Profile update error:", error);
+      toast.error("Failed to update profile. Please try again.");
     } finally {
       setUpdating(false);
     }
-  };
-
-  const handleLogout = () => {
-    // Implement logout functionality
-    router.push('/login');
   };
 
   const handleDeleteConfirmationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,11 +162,17 @@ export default function AccountSettings() {
     try {
       setIsDeleting(true);
       
-      await axios.patch('/api/profile/account-settings/delete-account');
+      const response = await fetch("/api/profile/account-settings/delete-account", {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
       
       toast.success('Your account has been successfully deleted');
       
-      // Redirect to logout or home page after a short delay
+      // Redirect to logout after a short delay
       setTimeout(() => {
         router.push('/login');
       }, 2000);
@@ -158,141 +187,159 @@ export default function AccountSettings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-          <p className="text-gray-600">Loading your account settings...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center p-6">
+          <User className="w-10 h-10 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-medium text-gray-800 mb-2">Profile Not Found</h2>
+          <Link href="/login" className="text-blue-500 hover:underline">
+            Login
+          </Link>
         </div>
       </div>
     );
   }
 
+  // Check if avatar path is valid
+  const hasValidAvatar = formData.avatar && formData.avatar.trim() !== "" && !avatarError;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Toaster position="top-center" />
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header with navigation */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Link href="/profileinnotes" className="flex items-center text-sm text-gray-600 hover:text-indigo-600 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              <span>Profile</span>
-            </Link>
-          </div>
+        <div className="flex items-center justify-between mb-10">
+          <Link 
+            href="/profileinnotes" 
+            className="flex items-center text-gray-600 hover:text-blue-500 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span>Back to Profile</span>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              {/* User profile card */}
-              <div className="px-6 py-6 border-b border-gray-100">
-                <div className="flex flex-col items-center text-center mb-4">
-                  <div className="relative group mb-4">
-                    <div className="w-24 h-24 rounded-full relative overflow-hidden border-4 border-white shadow-md">
-                      {hasValidAvatar ? (
-                        <Image 
-                          src={profile.avatar} 
-                          alt="Profile picture" 
-                          fill
-                          className="object-cover"
-                          onError={() => setAvatarError(true)}
-                        />
-                      ) : (
-                        <Image
-                          src={defaultAvatar}
-                          alt="Default avatar" 
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                    </div>
-                    <label 
-                      htmlFor="avatar-upload" 
-                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      <Camera className="w-6 h-6" />
-                      <input 
-                        id="avatar-upload" 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleAvatarChange}
-                      />
-                    </label>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-1">{profile.name}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{profile.email}</p>
-                  
-                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                    Active Account
-                  </div>
-                </div>
+  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+    {/* User profile card */}
+    <div className="px-6 py-6 border-b border-gray-100">
+      <div className="flex flex-col items-center text-center mb-4">
+        <div className="relative group mb-4">
+          <div className="w-24 h-24 rounded-full relative overflow-hidden border-4 border-white shadow-sm">
+            {hasValidAvatar ? (
+              <Image 
+                src={formData.avatar} 
+                alt="Profile picture" 
+                fill
+                className="object-cover"
+                onError={() => setAvatarError(true)}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="w-12 h-12 text-gray-400" />
               </div>
-              
-              {/* Navigation */}
-              <nav className="p-4">
-                <ul className="space-y-1">
-                  <li>
-                    <button 
-                      onClick={() => setActiveTab('profile')}
-                      className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'profile' 
-                          ? 'bg-indigo-50 text-indigo-700' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <User className="w-5 h-5 mr-3" />
-                      Profile
-                    </button>
-                  </li>
-                  <li>
-                    <button 
-                      onClick={() => setActiveTab('help')}
-                      className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'help' 
-                          ? 'bg-indigo-50 text-indigo-700' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <HelpCircle className="w-5 h-5 mr-3" />
-                      Help & Support
-                    </button>
-                  </li>
-                  <li>
-                    <button 
-                      onClick={() => setActiveTab('delete-account')}
-                      className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === 'delete-account' 
-                          ? 'bg-red-50 text-red-700' 
-                          : 'text-red-600 hover:bg-red-50'
-                      }`}
-                    >
-                      <Trash2 className="w-5 h-5 mr-3" />
-                      Delete Account
-                    </button>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+            )}
           </div>
+          <label 
+            htmlFor="avatar-upload" 
+            className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            <Camera className="w-6 h-6" />
+            <input 
+              id="avatar-upload" 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleAvatarChange}
+            />
+          </label>
+        </div>
+        <h3 className="text-lg font-medium text-gray-800 mb-1 truncate max-w-full">{user.firstName}</h3>
+        <p className="text-sm text-gray-500 mb-3 truncate max-w-full">{user.email}</p>
+        
+        <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+          Active Account
+        </div>
+      </div>
+    </div>
+    
+    {/* Navigation */}
+    <nav className="p-4">
+      <ul className="space-y-1">
+        <li>
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'profile' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex-shrink-0 mr-3">
+              <User className="w-5 h-5" />
+            </span>
+            <span className="truncate">Profile</span>
+          </button>
+        </li>
+        <li>
+          <button 
+            onClick={() => setActiveTab('help')}
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'help' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex-shrink-0 mr-3">
+              <HelpCircle className="w-5 h-5" />
+            </span>
+            <span className="truncate">Help & Support</span>
+          </button>
+        </li>
+        <li>
+          <button 
+            onClick={() => setActiveTab('delete-account')}
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'delete-account' 
+                ? 'bg-red-50 text-red-700' 
+                : 'text-red-600 hover:bg-red-50'
+            }`}
+          >
+            <span className="flex-shrink-0 mr-3">
+              <Trash2 className="w-5 h-5" />
+            </span>
+            <span className="truncate">Delete Account</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
 
           {/* Main content area */}
           <div className="lg:col-span-3">
             {activeTab === 'profile' && (
               <form onSubmit={handleSubmit}>
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-6">
                   <div className="px-6 py-5 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-800">Profile Information</h2>
+                    <h2 className="text-lg font-medium text-gray-800">Profile Information</h2>
                     <p className="text-sm text-gray-500 mt-1">Update your account profile information and email address.</p>
                   </div>
                   
                   <div className="p-6 space-y-6">
                     {/* Name Field */}
                     <div className="space-y-2">
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
                         Full Name
                       </label>
                       <div className="relative rounded-md shadow-sm">
@@ -301,20 +348,36 @@ export default function AccountSettings() {
                         </div>
                         <input
                           type="text"
-                          id="name"
-                          name="name"
-                          value={profile.name}
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
                           onChange={handleChange}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-colors text-gray-900"
+                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-colors text-gray-900"
                           placeholder="Enter your full name"
                           required
                         />
                       </div>
                     </div>
                     
-                    {/* Phone Number Field */}
+                    {/* Email Field */}
                     <div className="space-y-2">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email Address
+                      </label>
                       <div className="relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Mail className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-colors text-gray-900"
+                          placeholder="Enter your email address"
+                          required
+                        />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         This will be used for account recovery and important notifications.
@@ -334,7 +397,7 @@ export default function AccountSettings() {
                   </Link>
                   <button
                     type="submit"
-                    className="flex items-center justify-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     disabled={updating}
                   >
                     {updating ? (
@@ -354,9 +417,9 @@ export default function AccountSettings() {
             )}
             
             {activeTab === 'delete-account' && (
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-6">
                 <div className="px-6 py-5 border-b border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-800">Delete Account</h2>
+                  <h2 className="text-sm font-medium text-gray-800">Delete Account</h2>
                   <p className="text-sm text-gray-500 mt-1">Permanently delete your account and all associated data.</p>
                 </div>
                 
@@ -435,29 +498,34 @@ export default function AccountSettings() {
               </div>
             )}
             
-            {(activeTab !== 'profile' && activeTab !== 'delete-account') && (
-              <div className="bg-white rounded-xl shadow-sm p-6 text-center">
+            {activeTab === 'help' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center">
                 <div className="py-12">
                   <div className="bg-gray-50 inline-flex p-4 rounded-full mb-4">
-                    {activeTab === 'notifications' && <Bell className="w-8 h-8 text-indigo-600" />}
-                    {activeTab === 'security' && <Shield className="w-8 h-8 text-indigo-600" />}
-                    {activeTab === 'billing' && <CreditCard className="w-8 h-8 text-indigo-600" />}
-                    {activeTab === 'help' && <HelpCircle className="w-8 h-8 text-indigo-600" />}
+                    <HelpCircle className="w-8 h-8 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {activeTab === 'notifications' && 'Notification Settings'}
-                    {activeTab === 'security' && 'Security Settings'}
-                    {activeTab === 'billing' && 'Billing Information'}
-                    {activeTab === 'help' && 'Help & Support'}
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    Help & Support
                   </h3>
                   <p className="text-gray-500 max-w-md mx-auto">
-                    This section is currently under development. Check back soon for updates!
+                    Need help with your account? Check our help center or contact support for assistance.
                   </p>
+                  <button 
+                    onClick={() => window.open('mailto:support@gogginnotes.com', '_blank')}
+                    className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+                  >
+                    Contact Support
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="border-t border-gray-100 pt-6 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Goggins Notes</p>
+        </footer>
       </div>
     </div>
   );
