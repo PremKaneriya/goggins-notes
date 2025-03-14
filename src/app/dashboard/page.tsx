@@ -321,7 +321,7 @@ const formatDate = (dateString: string) => {
 
       <div
         className={`text-gray-700 text-sm whitespace-pre-line break-words ${
-          expanded ? "line-clamp-none" : "line-clamp-6"
+          expanded ? "line-clamp-none" : "line-clamp-2"
         } cursor-pointer mb-2`}
       >
         {note.content}
