@@ -169,18 +169,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the phone number is already in use by a non-deleted account
-    const existingUser = await User.findOne({
-      isEmailVerified: true,
-      isAccountDeleted: { $ne: true }, // Exclude deleted accounts
-    });
+    // // Check if the phone number is already in use by a non-deleted account
+    // const existingUser = await User.findOne({
+    //   isEmailVerified: true,
+    //   isAccountDeleted: { $ne: true }, // Exclude deleted accounts
+    // });
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "Account with this email already exists" },
-        { status: 400 }
-      );
-    }
+    // if (existingUser) {
+    //   return NextResponse.json(
+    //     { error: "Account with this email already exists" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Check for deleted account with this email
     const deletedAccount = await User.findOne({
