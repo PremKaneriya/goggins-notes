@@ -167,7 +167,7 @@ export default function AccountSettings() {
       const response = await fetch(
         "/api/profile/account-settings/delete-account",
         {
-          method: "DELETE",
+          method: "PATCH",
         }
       );
 

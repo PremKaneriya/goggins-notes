@@ -155,32 +155,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if the email is already in use by a verified user who hasn't deleted their account
-    const existingVerifiedUser = await User.findOne({
+    // Check if the email is already in use by any non-deleted account
+    const existingUser = await User.findOne({
       email,
-      isEmailVerified: true,
       isAccountDeleted: { $ne: true }, // Exclude deleted accounts
     });
 
-    if (existingVerifiedUser) {
+    if (existingUser && existingUser.isEmailVerified) {
       return NextResponse.json(
         { error: "Email is already in use" },
         { status: 400 }
       );
     }
-
-    // // Check if the phone number is already in use by a non-deleted account
-    // const existingUser = await User.findOne({
-    //   isEmailVerified: true,
-    //   isAccountDeleted: { $ne: true }, // Exclude deleted accounts
-    // });
-
-    // if (existingUser) {
-    //   return NextResponse.json(
-    //     { error: "Account with this email already exists" },
-    //     { status: 400 }
-    //   );
-    // }
 
     // Check for deleted account with this email
     const deletedAccount = await User.findOne({
@@ -213,42 +199,33 @@ export async function POST(request: NextRequest) {
       // Save first to ensure database is updated
       user = await deletedAccount.save();
       console.log(`Restored deleted account with new data and OTP: ${otp}`);
+    } else if (existingUser && !existingUser.isEmailVerified) {
+      // Update the existing unverified user
+      existingUser.password = hashedPassword;
+      existingUser.firstName = firstName;
+      existingUser.avatar = avatar;
+      existingUser.emailVerificationOTP = otp;
+      existingUser.emailVerificationOTPExpiry = otpExpiry;
+
+      // Save first to ensure database is updated
+      user = await existingUser.save();
+      console.log(`Updated unverified user in database with OTP: ${otp}`);
     } else {
-      // Check for existing unverified user with this email
-      const existingUnverifiedUser = await User.findOne({
+      // Create a new user with verification fields
+      const newUser = new User({
         email,
+        password: hashedPassword,
+        firstName,
+        avatar,
         isEmailVerified: false,
-        isAccountDeleted: { $ne: true }, // Exclude deleted accounts
+        emailVerificationOTP: otp,
+        emailVerificationOTPExpiry: otpExpiry,
+        isAccountDeleted: false, // Explicitly set as not deleted
       });
 
-      if (existingUnverifiedUser) {
-        // Update the existing unverified user
-        existingUnverifiedUser.password = hashedPassword;
-        existingUnverifiedUser.firstName = firstName;
-        existingUnverifiedUser.avatar = avatar;
-        existingUnverifiedUser.emailVerificationOTP = otp;
-        existingUnverifiedUser.emailVerificationOTPExpiry = otpExpiry;
-
-        // Save first to ensure database is updated
-        user = await existingUnverifiedUser.save();
-        console.log(`Updated user in database with OTP: ${otp}`);
-      } else {
-        // Create a new user with verification fields
-        const newUser = new User({
-          email,
-          password: hashedPassword,
-          firstName,
-          avatar,
-          isEmailVerified: false,
-          emailVerificationOTP: otp,
-          emailVerificationOTPExpiry: otpExpiry,
-          isAccountDeleted: false, // Explicitly set as not deleted
-        });
-
-        // Save first to ensure database is updated
-        user = await newUser.save();
-        console.log(`Created new user in database with OTP: ${otp}`);
-      }
+      // Save first to ensure database is updated
+      user = await newUser.save();
+      console.log(`Created new user in database with OTP: ${otp}`);
     }
 
     // Send OTP after database update is confirmed
@@ -268,7 +245,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Add this new endpoint for OTP verification
 // Add this new endpoint for OTP verification
 export async function PUT(request: NextRequest) {
   try {

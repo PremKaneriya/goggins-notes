@@ -6,6 +6,10 @@ export interface MyUser {
   avatar: string;
   email: string;
   password: string;
+  isEmailVerified: boolean;
+  emailVerificationOTP?: string;
+  emailVerificationOTPExpiry?: Date;
+  isAccountDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -14,7 +18,7 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     required: true,
-    unique: true
+    // Removed unique: true from avatar since multiple users might have the same avatar URL
   },
   email: {
       type: String,
