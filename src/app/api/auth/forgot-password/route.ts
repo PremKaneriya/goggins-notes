@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     });
     
     const mailOptions = {
-      from: `"Support Team" <${process.env.EMAIL_USER}>`,
+      from: `"Goggins Notebook Support Team" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "Password Reset Request",
       html: `

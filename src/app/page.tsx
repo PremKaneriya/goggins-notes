@@ -78,12 +78,20 @@ export default function Home() {
                 </Link>
               </div>
               <div className="pt-6">
-                <p className="text-sm text-gray-600">Trusted by the mentally tough at</p>
+                <p className="text-sm text-gray-600">Created with the mentally tough at</p>
                 <div className="flex flex-wrap items-center gap-6 mt-4">
-                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
-                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
-                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
-                  <div className="h-6 w-20 bg-gray-200 rounded"></div>
+                  <div className="h-6 w-20 rounded">
+                    <img src="https://ml.globenewswire.com/Resource/Download/3a54c241-a668-4c94-9747-3d3da9da3bf2" alt="David Goggins" className="h-full w-full object-contain" />
+                  </div>
+                  <div className="h-6 w-20 rounded">
+                    <img src="https://cdn.rswebsols.com/wp-content/uploads/2024/02/next-js-logo-920x341.png?strip=all&lossy=1&ssl=1" alt="David Goggins" className="h-full w-full object-contain" />
+                  </div>
+                  <div className="h-6 w-20 rounded">
+                  <img src="https://dotnettrickscloud.blob.core.windows.net/img/nodejs/nodejs.png" alt="David Goggins" className="h-full w-full object-contain" />
+                  </div>
+                  <div className="h-6 w-20 rounded">
+                    <img src="https://www.ovhcloud.com/sites/default/files/styles/large_screens_1x/public/2022-03/black.png" alt="David Goggins" className="h-full w-full object-contain" />
+                  </div>
                 </div>
               </div>
             </div>
