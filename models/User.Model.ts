@@ -1,7 +1,8 @@
-import mongoose, { model, models } from "mongoose";
+import mongoose, { model, models, Schema, Document } from "mongoose";
+import validator from "validator";
 
-export interface MyUser {
-  _id: mongoose.Types.ObjectId;
+// Interface for the document as stored in MongoDB
+export interface MyUser extends Document {
   firstName: string;
   avatar: string;
   email: string;
@@ -10,28 +11,36 @@ export interface MyUser {
   emailVerificationOTP?: string;
   emailVerificationOTPExpiry?: Date;
   isAccountDeleted: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
-const userSchema = new mongoose.Schema({
+// Create schema with type assertion to bypass strict TypeScript checking
+const userSchema = new Schema({
   avatar: {
     type: String,
     required: true,
-    // Removed unique: true from avatar since multiple users might have the same avatar URL
   },
   email: {
-      type: String,
-      required: true,
-      unique: true
+    type: String,
+    required: [true, "Please provide an email"],
+    unique: true,
+    validate: {
+      validator: validator.isEmail,
+      message: "Please provide a valid email",
+    },
   },
   password: {
-      type: String,
-      required: true,
+    type: String,
+    required: [true, "Please provide a password"],
+    minlength: [6, "Password must be at least 6 characters"],
+    select: false,
   },
   firstName: {
-      type: String,
-      required: true
+    type: String,
+    required: true
   },
   isEmailVerified: {
     type: Boolean,
@@ -46,11 +55,18 @@ const userSchema = new mongoose.Schema({
   isAccountDeleted: {
     type: Boolean,
     default: false
+  },
+  resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpires: {
+    type: Date
   }
-}, {
+} as any, {
   timestamps: true,
 });
 
+// Create model
 const User = models.User || model<MyUser>("User", userSchema);
 
 export default User;

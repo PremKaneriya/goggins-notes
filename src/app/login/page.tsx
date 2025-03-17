@@ -128,9 +128,12 @@ export default function Login() {
                 <div className="flex items-center">
                 </div>
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                    Forgot your password?
-                  </a>
+                <div className="mb-4 text-right">
+                <Link href="/forgot-password" className="text-blue-600 hover:underline text-sm">
+                  Forgot Password?
+                </Link>
+                    </div>
+
                 </div>
               </div>
               
