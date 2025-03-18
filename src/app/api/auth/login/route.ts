@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 30 days in seconds: 30 * 24 * 60 * 60 = 2592000
+    const MAX_AGE = 2592000;
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET!,
@@ -42,13 +45,12 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Consider relaxing SameSite and adding Secure conditionally
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // Secure only in production
-      maxAge: 3600,
+      maxAge: MAX_AGE, // Set cookie to expire in 30 days
       path: "/",
-      sameSite: "lax", // ✅ Fix: Use lowercase "lax"
+      sameSite: "lax",
     });
 
     return response;

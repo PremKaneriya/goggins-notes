@@ -78,7 +78,7 @@ export default function Home() {
                 </Link>
               </div>
               <div className="pt-6">
-                <p className="text-sm text-gray-600">Created with the mentally tough at</p>
+                <p className="text-sm text-gray-600">Powered by the best in performance and technology</p>
                 <div className="flex flex-wrap items-center gap-6 mt-4">
                   <div className="h-6 w-20 rounded">
                     <img src="https://ml.globenewswire.com/Resource/Download/3a54c241-a668-4c94-9747-3d3da9da3bf2" alt="David Goggins" className="h-full w-full object-contain" />
