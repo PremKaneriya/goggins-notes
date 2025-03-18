@@ -101,7 +101,7 @@ export default function ForgotPassword() {
                   Back to Login
                 </Link>
                 <span className="text-gray-400">•</span>
-                <Link href="/register" className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline transition duration-200">
+                <Link href="/signup" className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline transition duration-200">
                   Create Account
                 </Link>
               </div>
