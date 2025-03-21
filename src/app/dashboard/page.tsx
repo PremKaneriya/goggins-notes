@@ -372,9 +372,10 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update all state when note changes
+  // Fix for the state reset issue - only update state based on note prop
+  // if we're not in create mode or if it's the initial render
   useEffect(() => {
-    if (note) {
+    if (!isCreateMode && note) {
       setTitle(note.title);
       setContent(note.content);
       setLastEditTime(
@@ -382,10 +383,12 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       );
       setHasChanges(false);
       setIsEditing(isCreateMode);
-    } else {
+    } else if (!isCreateMode && !note) {
+      // Only reset if we're not in create mode
       setTitle("");
       setContent("");
     }
+    // For create mode, we keep the title and content as is
   }, [note, isCreateMode]);
 
   useEffect(() => {
