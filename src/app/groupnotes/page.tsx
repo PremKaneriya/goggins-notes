@@ -268,36 +268,8 @@ const GroupNotes = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-            {/* Header Skeleton */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="w-40 h-6 bg-gray-300 animate-pulse rounded"></div>
-              <div className="w-24 h-6 bg-gray-300 animate-pulse rounded"></div>
-            </div>
-      
-            {/* Notes List Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 9 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-white shadow-md rounded-lg animate-pulse"
-                >
-                  {/* Title */}
-                  <div className="w-3/4 h-5 bg-gray-300 rounded mb-3"></div>
-      
-                  {/* Body (3 lines) */}
-                  <div className="w-full h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="w-full h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="w-2/3 h-4 bg-gray-300 rounded"></div>
-      
-                  {/* Footer (Date & Actions) */}
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="w-20 h-4 bg-gray-300 rounded"></div>
-                    <div className="w-16 h-6 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
           </div>
         );
     }
