@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff, Trash2, Edit } from "lucide-react";
+import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff, Trash2, Edit, FilePlus, Search, FolderPlus, FileText, FileX, Check } from "lucide-react";
 import Link from "next/link";
 
 type GroupNote = {
@@ -268,394 +268,437 @@ const GroupNotes = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-            {/* Header Skeleton */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="w-40 h-6 bg-gray-300 animate-pulse rounded"></div>
-              <div className="w-24 h-6 bg-gray-300 animate-pulse rounded"></div>
-            </div>
-      
-            {/* Notes List Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 9 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-white shadow-md rounded-lg animate-pulse"
-                >
-                  {/* Title */}
-                  <div className="w-3/4 h-5 bg-gray-300 rounded mb-3"></div>
-      
-                  {/* Body (3 lines) */}
-                  <div className="w-full h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="w-full h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="w-2/3 h-4 bg-gray-300 rounded"></div>
-      
-                  {/* Footer (Date & Actions) */}
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="w-20 h-4 bg-gray-300 rounded"></div>
-                    <div className="w-16 h-6 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
           </div>
         );
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50">
-            {/* Header with back button */}
-            <header className="sticky top-0 z-10 bg-white shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center">
-                            <Link href="/dashboard" className="flex items-center text-gray-700 hover:text-gray-900 mr-4">
-                                <ArrowLeft size={20} className="mr-1" />
-                                <span className="text-sm font-medium">Back</span>
-                            </Link>
-                            <h1 className="text-xl font-bold text-gray-800">NoteBook Groups</h1> 
-                        </div>
-                        
-                        {/* Expand/Collapse All Button */}
-                        {groupNotes.length > 0 && (
-                            <button
-                                onClick={toggleExpandAll}
-                                className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
-                            >
-                                {expandAll ? (
-                                    <>
-                                        <EyeOff size={16} className="mr-1" />
-                                        Collapse All
-                                    </>
-                                ) : (
-                                    <>
-                                        <Eye size={16} className="mr-1" />
-                                        Expand All
-                                    </>
-                                )}
-                            </button>
-                        )}
-                    </div>
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    {/* Modern Header with Glassmorphism effect */}
+    <header className="sticky top-0 z-10 backdrop-blur-sm bg-white/80 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-4">
+                    <Link href="/dashboard" className="flex items-center text-slate-700 hover:text-slate-900 transition-colors">
+                        <ArrowLeft size={20} className="mr-2" />
+                        <span className="text-sm font-medium">Back to Dashboard</span>
+                    </Link>
+                    <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                    <h1 className="text-xl font-bold text-slate-800 hidden sm:block">My Notebook Collections</h1>
                 </div>
-            </header>
+                
+                {/* Expand/Collapse All Button with updated style */}
+                {groupNotes.length > 0 && (
+                    <button
+                        onClick={toggleExpandAll}
+                        className="flex items-center text-sm font-medium rounded-full px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all"
+                    >
+                        {expandAll ? (
+                            <>
+                                <EyeOff size={16} className="mr-2" />
+                                <span>Collapse All</span>
+                            </>
+                        ) : (
+                            <>
+                                <Eye size={16} className="mr-2" />
+                                <span>Expand All</span>
+                            </>
+                        )}
+                    </button>
+                )}
+            </div>
+        </div>
+    </header>
 
-            {/* Main content */}
-            <main className="flex-grow px-4 py-6 sm:px-6 max-w-7xl mx-auto w-full">
-                {groupNotes.length > 0 ? (
-                    <div className="grid gap-4">
-                        {groupNotes.map(groupNote => (
-                            <div key={groupNote._id} className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-                                {/* Group Header - Clickable to expand */}
-                                <div 
-                                    className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
-                                >
-                                    <div 
-                                        className="flex-grow mr-2"
-                                        onClick={() => toggleGroupExpansion(groupNote._id)}
-                                    >
-                                        <h3 className="font-semibold text-gray-800">{groupNote.name}</h3>
-                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{groupNote.description}</p>
-                                    </div>
+    {/* Main content with improved visual styling */}
+    <main className="flex-grow px-4 py-8 sm:px-6 max-w-7xl mx-auto w-full">
+        {groupNotes.length > 0 ? (
+            <div className="grid gap-6">
+                {groupNotes.map(groupNote => (
+                    <div key={groupNote._id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-300">
+                        {/* Group Header with more visually appealing layout */}
+                        <div 
+                            className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                        >
+                            <div 
+                                className="flex-grow mr-2"
+                                onClick={() => toggleGroupExpansion(groupNote._id)}
+                            >
+                                <h3 className="font-semibold text-slate-800 text-lg">{groupNote.name}</h3>
+                                <p className="text-sm text-slate-500 mt-1 line-clamp-2">{groupNote.description}</p>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                {/* Delete confirmation redesign */}
+                                {deleteConfirmationId === groupNote._id ? (
                                     <div className="flex items-center">
-                                        {/* Delete button */}
-                                        {deleteConfirmationId === groupNote._id ? (
-                                            <div className="flex items-center mr-4">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeleteConfirmationId(null);
-                                                    }}
-                                                    className="text-gray-500 hover:text-gray-700 text-xs mr-2 px-2 py-1 rounded"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteGroupNote(groupNote._id);
-                                                    }}
-                                                    className="bg-red-50 text-red-600 hover:bg-red-100 text-xs px-2 py-1 rounded flex items-center"
-                                                    disabled={isDeleting[groupNote._id]}
-                                                >
-                                                    {isDeleting[groupNote._id] ? (
-                                                        <Loader2 size={12} className="animate-spin mr-1" />
-                                                    ) : (
-                                                        <Trash2 size={12} className="mr-1" />
-                                                    )}
-                                                    Confirm
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {/* Edit button */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        startEditing(groupNote);
-                                                    }}
-                                                    className="text-gray-400 hover:text-blue-500 mr-2 focus:outline-none p-1"
-                                                    aria-label="Edit group"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                
-                                                {/* Delete button */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeleteConfirmationId(groupNote._id);
-                                                    }}
-                                                    className="text-gray-400 hover:text-red-500 mr-4 focus:outline-none p-1"
-                                                    aria-label="Delete group"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </>
-                                        )}
-                                        
-                                        <span className="text-xs font-medium text-gray-500 mr-2">
-                                            {groupNote.noteObjects.length} Note{groupNote.noteObjects.length !== 1 ? 's' : ''}
-                                        </span>
-                                        <ChevronRight 
-                                            size={20} 
-                                            className={`text-gray-500 transition-transform ${expandedGroups[groupNote._id] ? 'rotate-90' : ''}`}
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                toggleGroupExpansion(groupNote._id);
+                                                setDeleteConfirmationId(null);
                                             }}
-                                        />
+                                            className="text-slate-500 hover:text-slate-700 text-xs mr-2 px-3 py-1.5 rounded-md border border-slate-200 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteGroupNote(groupNote._id);
+                                            }}
+                                            className="bg-red-50 text-red-600 hover:bg-red-100 text-xs px-3 py-1.5 rounded-md border border-red-200 flex items-center transition-colors"
+                                            disabled={isDeleting[groupNote._id]}
+                                        >
+                                            {isDeleting[groupNote._id] ? (
+                                                <Loader2 size={12} className="animate-spin mr-1.5" />
+                                            ) : (
+                                                <Trash2 size={12} className="mr-1.5" />
+                                            )}
+                                            Confirm
+                                        </button>
                                     </div>
-                                </div>
+                                ) : (
+                                    <>
+                                        {/* Improved action buttons */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                startEditing(groupNote);
+                                            }}
+                                            className="text-slate-400 hover:text-blue-500 focus:outline-none p-1.5 rounded-full hover:bg-blue-50 transition-colors"
+                                            aria-label="Edit group"
+                                        >
+                                            <Edit size={16} />
+                                        </button>
+                                        
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirmationId(groupNote._id);
+                                            }}
+                                            className="text-slate-400 hover:text-red-500 focus:outline-none p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                            aria-label="Delete group"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                        
+                                        <div className="h-8 w-px bg-slate-200 mx-1"></div>
+                                    </>
+                                )}
                                 
-                                {/* Expanded Notes Section */}
-                                {expandedGroups[groupNote._id] && (
-                                    <div className="bg-gray-50 p-4 border-t border-gray-100">
-                                        {groupNote.noteObjects && groupNote.noteObjects.length > 0 ? (
-                                            <div className="grid gap-3">
-                                                {groupNote.noteObjects.map((note: Note) => (
-                                                    <div key={note._id} className="bg-white rounded-md shadow-sm overflow-hidden border border-gray-200">
-                                                        {/* Note Header - Now only toggles content expansion */}
-                                                        <div className="p-3 flex justify-between items-center">
-                                                            <h4 className="font-medium text-gray-800">{note.title}</h4>
-                                                            <button 
-                                                                onClick={(e) => toggleContentExpansion(note._id, e)}
-                                                                className="text-xs font-medium text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1 rounded"
-                                                            >
-                                                                {expandedContents[note._id] ? "Hide Content" : "Show Content"}
-                                                            </button>
-                                                        </div>
-                                                        
-                                                        {/* Note Content - Controlled by expandedContents state */}
-                                                        <div className="px-3 pb-3 pt-0">
-                                                            <div className="text-sm text-gray-600 mt-1">
-                                                                {expandedContents[note._id] ? (
-                                                                    <div className="whitespace-pre-wrap bg-gray-50 p-3 rounded-md border border-gray-200 mt-1">
-                                                                        {note.content}
-                                                                    </div>
-                                                                ) : (
-                                                                    <p className="line-clamp-2 italic">
-                                                                        {note.content.substring(0, 100)}
-                                                                        {note.content.length > 100 ? "..." : ""}
-                                                                    </p>
-                                                                )}
+                                <span className="text-xs font-medium bg-slate-100 text-slate-600 rounded-full px-2.5 py-1">
+                                    {groupNote.noteObjects.length} Note{groupNote.noteObjects.length !== 1 ? 's' : ''}
+                                </span>
+                                
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleGroupExpansion(groupNote._id);
+                                    }}
+                                    className={`p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500`}
+                                >
+                                    <ChevronRight 
+                                        size={18} 
+                                        className={`transition-transform duration-300 ${expandedGroups[groupNote._id] ? 'rotate-90' : ''}`}
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Expanded Notes Section with improved visual design */}
+                        {expandedGroups[groupNote._id] && (
+                            <div className="bg-slate-50 p-5 border-t border-slate-100">
+                                {groupNote.noteObjects && groupNote.noteObjects.length > 0 ? (
+                                    <div className="grid gap-4">
+                                        {groupNote.noteObjects.map((note: Note) => (
+                                            <div key={note._id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200 transition-all hover:border-slate-300">
+                                                {/* Note Header with improved layout */}
+                                                <div className="p-4 flex justify-between items-center">
+                                                    <h4 className="font-medium text-slate-800">{note.title}</h4>
+                                                    <button 
+                                                        onClick={(e) => toggleContentExpansion(note._id, e)}
+                                                        className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                                                    >
+                                                        {expandedContents[note._id] ? "Hide Content" : "Show Content"}
+                                                    </button>
+                                                </div>
+                                                
+                                                {/* Note Content with improved styling */}
+                                                <div className="px-4 pb-4 pt-0">
+                                                    <div className="text-sm text-slate-600">
+                                                        {expandedContents[note._id] ? (
+                                                            <div className="whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-200 mt-1">
+                                                                {note.content}
                                                             </div>
+                                                        ) : (
+                                                            <p className="line-clamp-2 italic text-slate-500">
+                                                                {note.content.substring(0, 100)}
+                                                                {note.content.length > 100 ? "..." : ""}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                                            <FileText size={20} />
+                                        </div>
+                                        <p className="text-slate-500 font-medium">No notes in this group yet</p>
+                                        <p className="text-xs text-slate-400 mt-1">Notes added to this group will appear here</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto mt-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 text-slate-400 mb-4">
+                    <FolderPlus size={24} />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">No notebook groups yet</h3>
+                <p className="text-slate-500 mb-6">Create your first group to organize your notes and easily access related content.</p>
+                <button 
+                    onClick={() => {
+                        setIsEditing(null);
+                        setNewGroupNote({ name: "", description: "" });
+                        setSelectedNotes([]);
+                        setIsModalOpen(true);
+                    }} 
+                    className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 inline-flex items-center"
+                >
+                    <Plus size={18} className="mr-1.5" />
+                    Create Your First Group
+                </button>
+            </div>
+        )}
+    </main>
+    
+    {/* Redesigned Floating Action Button */}
+    <button 
+        onClick={() => {
+            setIsEditing(null);
+            setNewGroupNote({ name: "", description: "" });
+            setSelectedNotes([]);
+            setIsModalOpen(true);
+        }} 
+        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 z-20 flex items-center justify-center hover:scale-110"
+        aria-label="Create new group note"
+    >
+        <Plus size={24} />
+    </button>
+    
+    {/* Full-screen Modal with improved design */}
+    {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-screen overflow-hidden flex flex-col h-full md:h-auto">
+                {/* Modal Header */}
+                <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                    <h3 className="text-xl font-semibold text-slate-800">
+                        {isEditing ? "Edit Notebook Group" : "Create New Notebook Group"}
+                    </h3>
+                    <button 
+                        onClick={() => {
+                            setIsModalOpen(false);
+                            setNewGroupNote({ name: "", description: "" });
+                            setSelectedNotes([]);
+                            setIsDropdownOpen(false);
+                            setIsEditing(null);
+                        }}
+                        className="text-slate-500 hover:text-slate-700 focus:outline-none p-1.5 rounded-full hover:bg-slate-200 transition-colors"
+                        aria-label="Close modal"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                {/* Modal Content */}
+                <div className="p-0 overflow-y-auto flex-grow flex">
+                    <div className="w-full md:flex">
+                        {/* Left Side - Group Details */}
+                        <div className="md:w-1/2 p-6 border-r border-slate-200">
+                            <h4 className="text-lg font-medium text-slate-800 mb-4">Group Details</h4>
+                            <div className="space-y-5">
+                                <div>
+                                    <label htmlFor="group-name" className="block text-sm font-medium text-slate-700 mb-1.5">Group Name</label>
+                                    <input 
+                                        id="group-name"
+                                        type="text" 
+                                        placeholder="Enter a descriptive name" 
+                                        value={isEditing ? editGroupData.name : newGroupNote.name} 
+                                        onChange={e => isEditing 
+                                            ? setEditGroupData(prev => ({ ...prev, name: e.target.value })) 
+                                            : setNewGroupNote(prev => ({ ...prev, name: e.target.value }))} 
+                                        className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 placeholder:text-slate-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="group-description" className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                                    <textarea 
+                                        id="group-description"
+                                        placeholder="What's this group about?" 
+                                        value={isEditing ? editGroupData.description : newGroupNote.description} 
+                                        onChange={e => isEditing 
+                                            ? setEditGroupData(prev => ({ ...prev, description: e.target.value })) 
+                                            : setNewGroupNote(prev => ({ ...prev, description: e.target.value }))} 
+                                        rows={5}
+                                        className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 placeholder:text-slate-400"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Right Side - Notes Selection */}
+                        <div className="md:w-1/2 p-6">
+                            <h4 className="text-lg font-medium text-slate-800 mb-4">Select Notes</h4>
+                            
+                            {/* Improved Dropdown */}
+                            <div className="relative mb-4">
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="w-full flex items-center justify-between bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                >
+                                    <div className="flex items-center">
+                                        <FileText size={16} className="text-slate-400 mr-2" />
+                                        <span className="text-sm text-slate-700">
+                                            {selectedNotes.length > 0 
+                                                ? `${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''} selected` 
+                                                : 'Choose notes to include in this group'}
+                                        </span>
+                                    </div>
+                                    <ChevronDown size={16} className={`text-slate-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                {isDropdownOpen && (
+                                    <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl max-h-72 overflow-y-auto">
+                                        <div className="sticky top-0 bg-white border-b border-slate-100 p-3">
+                                            <div className="relative">
+                                                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Search notes..." 
+                                                    className="w-full border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        {notes.length > 0 ? (
+                                            <div className="py-2">
+                                                {notes.map(note => (
+                                                    <div 
+                                                        key={note._id}
+                                                        className={`flex items-center p-3 mx-2 my-1 rounded-lg cursor-pointer transition-colors ${
+                                                            selectedNotes.some(n => n._id === note._id) 
+                                                                ? 'bg-blue-50 border border-blue-200' 
+                                                                : 'hover:bg-slate-50 border border-transparent'
+                                                        }`}
+                                                        onClick={() => handleSelectNote(note)}
+                                                    >
+                                                        <div className={`w-5 h-5 rounded-md mr-3 flex items-center justify-center ${
+                                                            selectedNotes.some(n => n._id === note._id)
+                                                                ? 'bg-blue-500'
+                                                                : 'border border-slate-300'
+                                                        }`}>
+                                                            {selectedNotes.some(n => n._id === note._id) && (
+                                                                <Check size={12} className="text-white" />
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-grow">
+                                                            <div className="font-medium text-slate-800">{note.title}</div>
+                                                            <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">{note.content}</div>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-sm text-gray-500 italic py-2">No notes in this group</p>
+                                            <div className="py-8 text-center">
+                                                <FileX size={24} className="mx-auto text-slate-300 mb-2" />
+                                                <div className="text-slate-500">No notes available</div>
+                                                <div className="text-xs text-slate-400 mt-1">Create notes first to add them to groups</div>
+                                            </div>
                                         )}
                                     </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                        <p className="text-gray-600 mb-4">No group notes yet. Create your first group!</p>
-                    </div>
-                )}
-            </main>
-            
-            {/* Floating Action Button */}
-            <button 
-                onClick={() => {
-                    setIsEditing(null);
-                    setNewGroupNote({ name: "", description: "" });
-                    setSelectedNotes([]);
-                    setIsModalOpen(true);
-                }} 
-                className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 z-20"
-                aria-label="Create new group note"
-            >
-                <Plus size={24} />
-            </button>
-            
-            {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <h3 className="text-lg font-semibold text-gray-800">
-                                {isEditing ? "Edit Group" : "Create New Group"}
-                            </h3>
-                            <button 
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    setNewGroupNote({ name: "", description: "" });
-                                    setSelectedNotes([]);
-                                    setIsDropdownOpen(false);
-                                    setIsEditing(null);
-                                }}
-                                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                                aria-label="Close modal"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        <div className="p-6 overflow-y-auto flex-grow">
-                            {/* Group Details */}
-                            <div className="space-y-4 mb-6">
-                                <div>
-                                    <label htmlFor="group-name" className="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
-                                    <input 
-                                        id="group-name"
-                                        type="text" 
-                                        placeholder="Enter group name" 
-                                        value={isEditing ? editGroupData.name : newGroupNote.name} 
-                                        onChange={e => isEditing 
-                                            ? setEditGroupData(prev => ({ ...prev, name: e.target.value })) 
-                                            : setNewGroupNote(prev => ({ ...prev, name: e.target.value }))} 
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="group-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <textarea 
-                                        id="group-description"
-                                        placeholder="Enter description" 
-                                        value={isEditing ? editGroupData.description : newGroupNote.description} 
-                                        onChange={e => isEditing 
-                                            ? setEditGroupData(prev => ({ ...prev, description: e.target.value })) 
-                                            : setNewGroupNote(prev => ({ ...prev, description: e.target.value }))} 
-                                        rows={3}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
-                                </div>
-                            </div>
                             
-                            {/* Notes Selection */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Select Notes</label>
-                                
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <span className="text-sm text-gray-700">
-                                            {selectedNotes.length > 0 
-                                                ? `${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''} selected` 
-                                                : 'Select notes to include'}
+                            {/* Selected Notes Preview with improved design */}
+                            <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 min-h-48">
+                                <div className="text-sm font-medium text-slate-700 mb-3 flex items-center justify-between">
+                                    <span>Selected Notes</span>
+                                    {selectedNotes.length > 0 && (
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
+                                            {selectedNotes.length}
                                         </span>
-                                        <ChevronDown size={16} className="text-gray-500" />
-                                    </button>
-                                    
-                                    {isDropdownOpen && (
-                                        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                            {notes.length > 0 ? (
-                                                <div className="p-2">
-                                                    {notes.map(note => (
-                                                        <div 
-                                                            key={note._id}
-                                                            className={`flex items-center p-2 rounded-md cursor-pointer ${
-                                                                selectedNotes.some(n => n._id === note._id) 
-                                                                    ? 'bg-blue-50 text-blue-700' 
-                                                                    : 'hover:bg-gray-50'
-                                                            }`}
-                                                            onClick={() => handleSelectNote(note)}
-                                                        >
-                                                            <div className="flex-grow">
-                                                                <div className="font-medium">{note.title}</div>
-                                                                <div className="text-xs text-gray-500 line-clamp-1">{note.content}</div>
-                                                            </div>
-                                                            <div className="ml-2">
-                                                                {selectedNotes.some(n => n._id === note._id) && (
-                                                                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                                                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                            <path d="M1 4L3 6L7 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                                        </svg>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="p-4 text-center text-gray-500">No notes available</div>
-                                            )}
-                                        </div>
                                     )}
                                 </div>
                                 
-                                {/* Selected Notes Preview */}
-                                {selectedNotes.length > 0 && (
-                                    <div className="mt-3 space-y-2">
-                                        <div className="text-xs font-medium text-gray-500">Selected Notes:</div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedNotes.map(note => (
-                                                <div 
-                                                    key={note._id}
-                                                    className="bg-blue-50 text-blue-700 text-xs rounded-full px-2 py-1 flex items-center"
+                                {selectedNotes.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedNotes.map(note => (
+                                            <div 
+                                                key={note._id}
+                                                className="bg-white text-slate-700 text-sm rounded-lg px-3 py-2 flex items-center border border-slate-200 hover:border-slate-300 transition-colors"
+                                            >
+                                                <span className="line-clamp-1 max-w-xs">{note.title}</span>
+                                                <button 
+                                                    onClick={() => handleSelectNote(note)}
+                                                    className="ml-2 text-slate-400 hover:text-red-500 focus:outline-none"
                                                 >
-                                                    <span className="line-clamp-1 max-w-xs">{note.title}</span>
-                                                    <button 
-                                                        onClick={() => handleSelectNote(note)}
-                                                        className="ml-1 text-blue-500 hover:text-blue-700 focus:outline-none"
-                                                    >
-                                                        <X size={12} />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-200 text-slate-400 mb-2">
+                                            <FilePlus size={16} />
                                         </div>
+                                        <p className="text-slate-500 text-sm">No notes selected yet</p>
+                                        <p className="text-xs text-slate-400 mt-1">Select notes from the dropdown above</p>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
-                            <button 
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    setNewGroupNote({ name: "", description: "" });
-                                    setSelectedNotes([]);
-                                    setIsEditing(null);
-                                }}
-                                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={isEditing 
-                                    ? () => handleEditGroupNote(isEditing) 
-                                    : handleCreateGroupNote} 
-                                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed" 
-                                disabled={isCreating || 
-                                    (isEditing 
-                                        ? !editGroupData.name.trim() || !editGroupData.description.trim() || selectedNotes.length === 0 
-                                        : !newGroupNote.name.trim() || !newGroupNote.description.trim() || selectedNotes.length === 0)}
-                            >
-                                {isCreating ? <Loader2 className="animate-spin" size={16} /> : (isEditing ? null : <Plus size={16} />)} 
-                                {isEditing ? "Save Changes" : "Create Group"}
-                            </button>
-                        </div>
                     </div>
                 </div>
-            )}
+                
+                {/* Action Buttons */}
+                <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:justify-end gap-3 bg-slate-50">
+                    <button 
+                        onClick={() => {
+                            setIsModalOpen(false);
+                            setNewGroupNote({ name: "", description: "" });
+                            setSelectedNotes([]);
+                            setIsEditing(null);
+                        }}
+                        className="w-full sm:w-auto px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onClick={isEditing 
+                            ? () => handleEditGroupNote(isEditing) 
+                            : handleCreateGroupNote} 
+                        className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" 
+                        disabled={isCreating || 
+                            (isEditing 
+                                ? !editGroupData.name.trim() || !editGroupData.description.trim() || selectedNotes.length === 0 
+                                : !newGroupNote.name.trim() || !newGroupNote.description.trim() || selectedNotes.length === 0)}
+                    >
+                        {isCreating ? <Loader2 className="animate-spin" size={16} /> : (isEditing ? null : <Plus size={16} />)} 
+                        {isEditing ? "Save Changes" : "Create Notebook Group"}
+                    </button>
+                </div>
+            </div>
         </div>
+    )}
+</div>
     );
 };
 
