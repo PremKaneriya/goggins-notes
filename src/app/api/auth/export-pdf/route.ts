@@ -1,38 +1,54 @@
-// api/auth/export-pdf/route.ts
-
-import { NextResponse, NextRequest } from "next/server";
+export const dynamic = 'force-dynamic';
 import connectDB from "@/dbConnect/dbConnect";
+import { getDataFromToken } from "@/utils/GetDataFromToken";
+import { NextRequest, NextResponse } from "next/server";
 import Note from "../../../../../models/Notes.Model";
-import { getDataFromToken } from "../../../../utils/GetDataFromToken";
+import User from "../../../../../models/User.Model";
 
 connectDB();
 
-export async function GET(req: NextRequest) {
+export async function GET(
+    req: NextRequest,
+) {
     try {
         const userId = await getDataFromToken(req);
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        
+        // Check if a specific note ID was requested
+        const url = new URL(req.url);
+        const noteId = url.searchParams.get('noteId');
+
+        const user = await User.findById(userId).lean() as { 
+            firstName?: string; 
+            avatar?: string; 
+            email: string; 
+            _id: string; 
+        } | null;
+        
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // Get the noteId from the query parameters (for single note export)
-        const url = new URL(req.url);
-        const noteId = url.searchParams.get("noteId");
-
+        // Query notes based on whether a specific note was requested
         let notes;
         if (noteId) {
-            // Export single note
-            notes = await Note.findOne({ _id: noteId, userId }).lean();
-            if (!notes) {
-                return NextResponse.json({ error: "Note not found" }, { status: 404 });
-            }
-            notes = [notes]; // Convert to array for consistent processing
+            notes = await Note.find({ userId, _id: noteId }).lean();
         } else {
-            // Export all notes
-            notes = await Note.find({ userId, is_deleted: false }).sort({ createdAt: -1 }).lean();
+            notes = await Note.find({ userId, is_deleted: false }).sort({ updatedAt: -1 }).lean();
         }
 
-        return NextResponse.json({ notes });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message, message: "Failed to fetch notes for export" }, { status: 500 });
+        return NextResponse.json({
+            notes,
+            user: {
+                name: user.firstName || '',
+                avatar: user.avatar || '',
+                email: user.email,
+                id: user._id,
+                totalNotesCreated: notes.length
+            }
+        }, { status: 200 });
+
+    } catch (error) {
+        console.error("Error in export-pdf API:", error);
+        return NextResponse.json({ error: "Failed to fetch data for PDF export" }, { status: 500 });
     }
 }
