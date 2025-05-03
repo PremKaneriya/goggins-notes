@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { fetchAndExportSingleNote } from "@/utils/pdfExport";
 
 type Note = {
   _id: string;
@@ -368,6 +369,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
   const [copySuccess, setCopySuccess] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isExporting, setIsExporting] = useState(false); // New state for export
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -477,6 +479,23 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
         console.error("Could not copy text: ", err);
       }
     );
+  };
+
+  // New function to export note to PDF
+  const exportToPdf = async () => {
+    if (isCreateMode || !note?._id) {
+      // Can't export unsaved notes
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      await fetchAndExportSingleNote(note._id);
+    } catch (error) {
+      console.error("Error exporting to PDF:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Handle keyboard shortcuts
@@ -699,6 +718,28 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-2">
+                {/* Export to PDF button */}
+                {!isCreateMode && note && (
+                  <button
+                    onClick={exportToPdf}
+                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-2"
+                    aria-label="Export to PDF"
+                    disabled={isExporting}
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span className="hidden sm:inline text-sm">Exporting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={18} />
+                        <span className="hidden sm:inline text-sm">Export PDF</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
                 {/* Edit button */}
                 <button
                   onClick={() => setIsEditing(true)}
@@ -808,7 +849,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       </div>
     </div>
   );
-};
+}
 
 const Dashboard = () => {
   const [notes, setNotes] = useState<Note[]>([]);
