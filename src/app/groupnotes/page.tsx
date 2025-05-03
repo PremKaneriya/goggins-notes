@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff, Trash2, Edit, FilePlus, Search, FolderPlus, FileText, FileX, Check } from "lucide-react";
+import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff, Trash2, Edit, FilePlus, Search, FolderPlus, FileText, FileX, Check, FileDown } from "lucide-react";
 import Link from "next/link";
+import { fetchAndExportGroupNote } from "@/utils/GroupPdfExport";
 
 type GroupNote = {
     _id: string;
@@ -9,8 +10,8 @@ type GroupNote = {
     description: string;
     createdAt: string;
     groupId: string;
-    notes: string[]; // Array of note IDs that belong to this group
-    noteObjects: Note[] // Array of note objects that belong to this group
+    notes: string[];
+    noteObjects: Note[];
     is_deleted: boolean;
 };
 
@@ -33,6 +34,7 @@ const GroupNotes = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
+    const [isExporting, setIsExporting] = useState<Record<string, boolean>>({});
     const [newGroupNote, setNewGroupNote] = useState({ name: "", description: "" });
     const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -50,12 +52,9 @@ const GroupNotes = () => {
         notes: []
     });
 
-
     const handleSearchNotes = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
-
-        // Filter notes based on search term
         const filtered = notes.filter(note =>
             note.title.toLowerCase().includes(value.toLowerCase()) ||
             note.content.toLowerCase().includes(value.toLowerCase())
@@ -81,22 +80,17 @@ const GroupNotes = () => {
                     groupNotesRes.json()
                 ]);
 
-                // Get notes that are not deleted
                 const activeNotes = notesData.filter((n: Note) => !n.is_deleted);
                 setNotes(activeNotes);
-                setFilteredNotes(activeNotes); // Initialize filteredNotes with all active notes
+                setFilteredNotes(activeNotes);
 
-                const activeGroupNotes = groupNotesRes2.filter((group: GroupNote) => !group.is_deleted);
-
-                // Enhance group notes with their actual note objects
-                const enhancedGroupNotes = activeGroupNotes.map((group: GroupNote) => {
-                    return {
-                        ...group,
-                        noteObjects: activeNotes.filter((note: Note) =>
-                            group.notes && group.notes.includes(note._id)
-                        )
-                    };
-                });
+                const activeGroupNotes = groupNotesRes2.filter((g: GroupNote) => !g.is_deleted);
+                const enhancedGroupNotes = activeGroupNotes.map((group: GroupNote) => ({
+                    ...group,
+                    noteObjects: activeNotes.filter((note: Note) =>
+                        group.notes && group.notes.includes(note._id)
+                    )
+                }));
 
                 setGroupNotes(enhancedGroupNotes);
             } catch (err) {
@@ -128,8 +122,6 @@ const GroupNotes = () => {
             if (!res.ok) throw new Error("Failed to create group note");
 
             const data = await res.json();
-
-            // Add note objects to the new group for immediate display
             const newGroupWithNotes = {
                 ...data.groupNote,
                 noteObjects: selectedNotes
@@ -148,7 +140,7 @@ const GroupNotes = () => {
 
     const handleEditGroupNote = async (groupId: string) => {
         try {
-            setIsCreating(true); // Reuse the loading state
+            setIsCreating(true);
             const res = await fetch("/api/auth/groupnote", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -164,8 +156,6 @@ const GroupNotes = () => {
             if (!res.ok) throw new Error("Failed to update group note");
 
             const data = await res.json();
-
-            // Update the group note in the local state
             setGroupNotes(prev => prev.map(group =>
                 group._id === groupId
                     ? {
@@ -178,7 +168,6 @@ const GroupNotes = () => {
                     : group
             ));
 
-            // Reset editing state
             setIsEditing(null);
             setEditGroupData({ name: "", description: "", notes: [] });
             setIsModalOpen(false);
@@ -186,6 +175,20 @@ const GroupNotes = () => {
             console.error(err);
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleExportGroupNote = async (groupId: string) => {
+        try {
+            setIsExporting(prev => ({ ...prev, [groupId]: true }));
+            const success = await fetchAndExportGroupNote(groupId);
+            if (!success) {
+                console.warn("Failed to export group note");
+            }
+        } catch (err) {
+            console.error("Error exporting group note:", err);
+        } finally {
+            setIsExporting(prev => ({ ...prev, [groupId]: false }));
         }
     };
 
@@ -202,9 +205,7 @@ const GroupNotes = () => {
 
     const handleDeleteGroupNote = async (id: string) => {
         try {
-            // Set deleting state for this specific group note
             setIsDeleting(prev => ({ ...prev, [id]: true }));
-
             const res = await fetch("/api/auth/groupnote", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -213,8 +214,6 @@ const GroupNotes = () => {
             });
 
             if (!res.ok) throw new Error("Failed to delete group note");
-
-            // Remove the group note from the state
             setGroupNotes(groupNotes.filter(group => group._id !== id));
             setDeleteConfirmationId(null);
         } catch (err) {
@@ -231,12 +230,10 @@ const GroupNotes = () => {
                 : [...prev, note]
         );
 
-        // Update editGroupData.notes accordingly if in edit mode
         if (isEditing) {
             setEditGroupData(prev => {
                 const noteId = note._id;
                 const isAlreadySelected = prev.notes.includes(noteId);
-
                 return {
                     ...prev,
                     notes: isAlreadySelected
@@ -255,7 +252,6 @@ const GroupNotes = () => {
     };
 
     const toggleContentExpansion = (noteId: string, e: React.MouseEvent) => {
-        // Stop event propagation to prevent toggling the note expansion
         e.stopPropagation();
         setExpandedContents(prev => ({
             ...prev,
@@ -263,20 +259,14 @@ const GroupNotes = () => {
         }));
     };
 
-    // Toggle expand/collapse all groups
     const toggleExpandAll = () => {
         const newExpandState = !expandAll;
         setExpandAll(newExpandState);
-
-        // Create a new object with all groups either expanded or collapsed
         const groupExpansionState: Record<string, boolean> = {};
         groupNotes.forEach(group => {
             groupExpansionState[group._id] = newExpandState;
         });
-
         setExpandedGroups(groupExpansionState);
-
-        // If collapsing all, also collapse all contents
         if (!newExpandState) {
             setExpandedContents({});
         }
@@ -292,7 +282,6 @@ const GroupNotes = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-            {/* Modern Header with Glassmorphism effect */}
             <header className="sticky top-0 z-10 backdrop-blur-sm bg-white/80 border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4">
@@ -304,8 +293,6 @@ const GroupNotes = () => {
                             <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
                             <h1 className="text-xl font-bold text-slate-800 hidden sm:block">My Notebook Collections</h1>
                         </div>
-
-                        {/* Expand/Collapse All Button with updated style */}
                         {groupNotes.length > 0 && (
                             <button
                                 onClick={toggleExpandAll}
@@ -328,25 +315,17 @@ const GroupNotes = () => {
                 </div>
             </header>
 
-            {/* Main content with improved visual styling */}
             <main className="flex-grow px-4 py-8 sm:px-6 max-w-7xl mx-auto w-full">
                 {groupNotes.length > 0 ? (
                     <div className="grid gap-6">
                         {groupNotes.map(groupNote => (
                             <div key={groupNote._id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-300">
-                                {/* Group Header with more visually appealing layout */}
-                                <div
-                                    className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
-                                >
-                                    <div
-                                        className="flex-grow mr-2"
-                                        onClick={() => toggleGroupExpansion(groupNote._id)}
-                                    >
+                                <div className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <div className="flex-grow mr-2" onClick={() => toggleGroupExpansion(groupNote._id)}>
                                         <h3 className="font-semibold text-slate-800 text-lg">{groupNote.name}</h3>
                                         <p className="text-sm text-slate-500 mt-1 line-clamp-2">{groupNote.description}</p>
                                     </div>
                                     <div className="flex items-center space-x-3">
-                                        {/* Delete confirmation redesign */}
                                         {deleteConfirmationId === groupNote._id ? (
                                             <div className="flex items-center">
                                                 <button
@@ -376,7 +355,21 @@ const GroupNotes = () => {
                                             </div>
                                         ) : (
                                             <>
-                                                {/* Improved action buttons */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleExportGroupNote(groupNote._id);
+                                                    }}
+                                                    className="text-slate-400 hover:text-green-500 focus:outline-none p-1.5 rounded-full hover:bg-green-50 transition-colors"
+                                                    aria-label="Export to PDF"
+                                                    disabled={isExporting[groupNote._id]}
+                                                >
+                                                    {isExporting[groupNote._id] ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <FileDown size={16} />
+                                                    )}
+                                                </button>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -387,7 +380,6 @@ const GroupNotes = () => {
                                                 >
                                                     <Edit size={16} />
                                                 </button>
-
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -398,21 +390,18 @@ const GroupNotes = () => {
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
-
                                                 <div className="h-8 w-px bg-slate-200 mx-1"></div>
                                             </>
                                         )}
-
                                         <span className="text-xs font-medium bg-slate-100 text-slate-600 rounded-full px-2.5 py-1">
                                             {groupNote.noteObjects.length} Note{groupNote.noteObjects.length !== 1 ? 's' : ''}
                                         </span>
-
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleGroupExpansion(groupNote._id);
                                             }}
-                                            className={`p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500`}
+                                            className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500"
                                         >
                                             <ChevronRight
                                                 size={18}
@@ -421,15 +410,12 @@ const GroupNotes = () => {
                                         </button>
                                     </div>
                                 </div>
-
-                                {/* Expanded Notes Section with improved visual design */}
                                 {expandedGroups[groupNote._id] && (
                                     <div className="bg-slate-50 p-5 border-t border-slate-100">
                                         {groupNote.noteObjects && groupNote.noteObjects.length > 0 ? (
                                             <div className="grid gap-4">
                                                 {groupNote.noteObjects.map((note) => (
                                                     <div key={note._id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200 transition-all hover:border-slate-300">
-                                                        {/* Note Header with improved layout */}
                                                         <div className="p-4 flex justify-between items-center">
                                                             <h4 className="font-medium text-slate-800">{note.title}</h4>
                                                             <button
@@ -439,8 +425,6 @@ const GroupNotes = () => {
                                                                 {expandedContents[note._id] ? "Hide Content" : "Show Content"}
                                                             </button>
                                                         </div>
-
-                                                        {/* Note Content with improved styling */}
                                                         <div className="px-4 pb-4 pt-0">
                                                             <div className="text-sm text-slate-600">
                                                                 {expandedContents[note._id] ? (
@@ -495,7 +479,6 @@ const GroupNotes = () => {
                 )}
             </main>
 
-            {/* Redesigned Floating Action Button */}
             <button
                 onClick={() => {
                     setIsEditing(null);
@@ -509,11 +492,9 @@ const GroupNotes = () => {
                 <Plus size={24} />
             </button>
 
-            {/* Fixed Modal with improved design and scrolling */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-                        {/* Modal Header - Fixed position */}
                         <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                             <h3 className="text-xl font-semibold text-slate-800">
                                 {isEditing ? "Edit Notebook Group" : "Create New Notebook Group"}
@@ -532,11 +513,8 @@ const GroupNotes = () => {
                                 <X size={20} />
                             </button>
                         </div>
-
-                        {/* Modal Content - Scrollable area */}
                         <div className="flex-grow overflow-y-auto">
                             <div className="md:flex flex-col md:flex-row">
-                                {/* Left Side - Group Details */}
                                 <div className="md:w-1/2 p-6 md:border-r border-slate-200">
                                     <h4 className="text-lg font-medium text-slate-800 mb-4">Group Details</h4>
                                     <div className="space-y-5">
@@ -568,12 +546,8 @@ const GroupNotes = () => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Right Side - Notes Selection */}
                                 <div className="md:w-1/2 p-6">
                                     <h4 className="text-lg font-medium text-slate-800 mb-4">Select Notes</h4>
-
-                                    {/* Improved Dropdown with better scrolling */}
                                     <div className="relative mb-4">
                                         <button
                                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -589,9 +563,9 @@ const GroupNotes = () => {
                                             </div>
                                             <ChevronDown size={16} className={`text-slate-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                                         </button>
-
                                         {isDropdownOpen && (
-                                            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl max-h-56 overflow-hidden flex flex-col">
+                                            <div className="absolute z-20 mt-1 w-full bg-white border border-sl
+ate-200 rounded-lg shadow-xl max-h-56 overflow-hidden flex flex-col">
                                                 <div className="sticky top-0 bg-white border-b border-slate-100 p-3 z-10">
                                                     <div className="relative">
                                                         <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
@@ -604,7 +578,6 @@ const GroupNotes = () => {
                                                         />
                                                     </div>
                                                 </div>
-
                                                 <div className="overflow-y-auto flex-grow">
                                                     {filteredNotes.length > 0 ? (
                                                         <div className="py-2">
@@ -643,8 +616,6 @@ const GroupNotes = () => {
                                             </div>
                                         )}
                                     </div>
-
-                                    {/* Selected Notes Preview with improved scrolling */}
                                     <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 h-64 flex flex-col">
                                         <div className="text-sm font-medium text-slate-700 mb-3 flex items-center justify-between">
                                             <span>Selected Notes</span>
@@ -654,7 +625,6 @@ const GroupNotes = () => {
                                                 </span>
                                             )}
                                         </div>
-
                                         <div className="overflow-y-auto flex-grow">
                                             {selectedNotes.length > 0 ? (
                                                 <div className="flex flex-wrap gap-2">
@@ -687,8 +657,6 @@ const GroupNotes = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Action Buttons - Fixed position */}
                         <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:justify-end gap-3 bg-slate-50">
                             <button
                                 onClick={() => {

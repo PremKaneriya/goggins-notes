@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -551,7 +552,7 @@ const FullPageNote: React.FC<FullPageNoteProps> = ({
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode, showUnsavedWarning, showDeleteConfirmation]);
+  }, [isEditing, hasChanges, note, onClose, handleSave, isCreateMode, showUnsavedWarning, showDeleteConfirmation, handleClose]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
