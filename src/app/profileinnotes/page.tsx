@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
-import { Loader2, ArrowLeft, LogOut, User } from "lucide-react";
+import { Loader2, ArrowLeft, LogOut, User, Trash2 } from "lucide-react";
 
 // Define a type for the user data
 type UserProfile = {
@@ -147,9 +147,18 @@ export default function Profile() {
           {/* Settings link */}
           <Link
             href="/account-settings"
-            className="block w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-center text-gray-700 transition-colors"
+            className="block w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg text-center text-gray-700 transition-colors mb-4"
           >
             Account Settings
+          </Link>
+
+          {/* Recently Deleted link */}
+          <Link
+            href="/recently-deleted"
+            className="flex items-center justify-center w-full py-3 px-4 bg-red-50 hover:bg-red-100 rounded-lg text-center text-red-700 transition-colors"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Recently Deleted
           </Link>
         </div>
 
