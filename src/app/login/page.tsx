@@ -44,37 +44,74 @@ export default function Login() {
     }));
   };
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError("");
+
+  //   try {
+  //     const response = await fetch("/api/auth/login", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(user),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         data.error || "Login failed. Please check your credentials."
+  //       );
+  //     }
+
+  //     localStorage.setItem("tab", "tab");
+
+  //     toast.success("Login successful!");
+  //     router.push("/dashboard");
+  //   } catch (error: any) {
+  //     setError(error.message);
+  //     toast.error(error.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(user),
-      });
+  try {
+    const geoRes = await fetch("https://ipapi.co/json");
+    const geo = await geoRes.json();
 
-      const data = await response.json();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...user,
+        geo: {
+          ipAddress: geo.ip,
+          location: `${geo.city}, ${geo.region}, ${geo.country_name}`,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+        }
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Login failed. Please check your credentials."
-        );
-      }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Login failed");
 
-      localStorage.setItem("tab", "tab");
+    toast.success("Login successful!");
+    router.push("/dashboard");
+  } catch (error: any) {
+    setError(error.message);
+    toast.error(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      toast.success("Login successful!");
-      router.push("/dashboard");
-    } catch (error: any) {
-      setError(error.message);
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
 <>

@@ -3,43 +3,58 @@ import User from "../../../../../models/User.Model";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { parseUserAgent } from "@/utils/parseUserAgent"; // Custom helper
+import DetailsModel from "../../../../../models/Details.Model";
 
-// Connect to the database once
 connectDB();
 
 export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
-    const { email, password } = reqBody;
+    const { email, password, geo } = reqBody;
 
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user) {
+    if (!user)
       return NextResponse.json({ error: "User not found" }, { status: 400 });
-    }
-
-    if (user.isAccountDeleted === true) {
-      return NextResponse.json({ error: "Account deleted, Please create new account" }, { status: 400 });
-    }
+    if (user.isAccountDeleted)
+      return NextResponse.json({ error: "Account deleted" }, { status: 400 });
 
     const isPasswordCorrect = await bcryptjs.compare(password, user.password);
-
-    if (!isPasswordCorrect) {
+    if (!isPasswordCorrect)
       return NextResponse.json(
         { error: "Incorrect password" },
         { status: 400 }
       );
-    }
 
-    // 30 days in seconds: 30 * 24 * 60 * 60 = 2592000
-    const MAX_AGE = 2592000;
+    const userAgent = request.headers.get("user-agent") || "";
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ipAddress =
+      forwarded?.split(",")[0]?.trim() ??
+      request.headers.get("x-real-ip") ??
+      request.ip ??
+      "::1";
+
+    const { browser, os, device } = parseUserAgent(userAgent);
+
+    // Save login details
+    await DetailsModel.create({
+      userId: user._id,
+      ipAddress: ipAddress,
+      browser,
+      os,
+      device,
+      location: geo?.location || "Unknown",
+      latitude: geo?.latitude || 0,
+      longitude: geo?.longitude || 0,
+    });
 
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET!,
-      { expiresIn: "30d" }
+      { expiresIn: "1y" }
     );
-    
+
     const response = NextResponse.json(
       { message: "User logged in successfully", info: user },
       { status: 200 }
@@ -47,8 +62,8 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure only in production
-      maxAge: MAX_AGE, // Set cookie to expire in 30 days
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 31536000,
       path: "/",
       sameSite: "lax",
     });
