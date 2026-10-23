@@ -1,642 +1,693 @@
 "use client";
-import React, { useCallback, useEffect, useId, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Plus, Loader2, ChevronDown, X, ChevronRight, ArrowLeft, Eye, EyeOff, Trash2, Edit, FilePlus, Search, FolderPlus, FileText, FileX, Check, FileDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowUpRight,
-  ChevronDown,
-  FileDown,
-  FileText,
-  FolderOpen,
-  FolderPlus,
-  Loader2,
-  Pencil,
-  PenLine,
-  Plus,
-  RotateCw,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
-import { AppShell } from "../components/AppShell";
-import { ConfirmDialog, Dialog, useScrollLock } from "../components/Dialog";
-import { EmptyState, SearchField } from "../components/ui";
 import { fetchAndExportGroupNote } from "@/utils/GroupPdfExport";
-import { formatShortDate, pluralize } from "@/utils/format";
+
+type GroupNote = {
+    _id: string;
+    name: string;
+    description: string;
+    createdAt: string;
+    groupId: string;
+    notes: string[];
+    noteObjects: Note[];
+    is_deleted: boolean;
+};
 
 type Note = {
-  _id: string;
-  title: string;
-  content: string;
-  is_deleted: boolean;
+    _id: string;
+    title: string;
+    content: string;
+    is_deleted: boolean;
 };
 
-type Group = {
-  _id: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  notes: string[];
-  is_deleted: boolean;
+type EditGroupDataType = {
+    name: string;
+    description: string;
+    notes: string[];
 };
-
-type GroupInput = {
-  name: string;
-  description: string;
-  notes: string[];
-};
-
-const TINTS = [
-  "bg-orange-500/15 text-orange-600 dark:text-orange-400",
-  "bg-sky-500/15 text-sky-600 dark:text-sky-400",
-  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  "bg-violet-500/15 text-violet-600 dark:text-violet-400",
-  "bg-rose-500/15 text-rose-600 dark:text-rose-400",
-  "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-];
-
-// Stable per-group colour so a group keeps its look across renames
-const tintFor = (id: string) =>
-  TINTS[id.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % TINTS.length];
-
-function GroupCard({ group, notes, onOpen }: { group: Group; notes: Note[]; onOpen: () => void }) {
-  const preview = notes.slice(0, 3);
-  return (
-    <button
-      onClick={onOpen}
-      className="card flex h-full flex-col p-5 text-left transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-ink/15 hover:shadow-xl hover:shadow-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-    >
-      <span className="flex items-start gap-3">
-        <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${tintFor(group._id)}`}>
-          <FolderOpen className="size-5" />
-        </span>
-        <span className="min-w-0 flex-1 pt-0.5">
-          <span className="block truncate font-semibold">{group.name}</span>
-          <span className="block text-xs text-ink-3">
-            {pluralize(notes.length, "note")} · {formatShortDate(group.createdAt)}
-          </span>
-        </span>
-      </span>
-      {group.description && (
-        <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-ink-2">{group.description}</span>
-      )}
-      {preview.length > 0 && (
-        <span className="mt-auto block pt-4">
-          <span className="block space-y-1.5 border-t border-line pt-3">
-            {preview.map((note) => (
-              <span key={note._id} className="flex items-center gap-2 text-sm text-ink-2">
-                <FileText className="size-3.5 shrink-0 text-ink-3" />
-                <span className="truncate">{note.title}</span>
-              </span>
-            ))}
-            {notes.length > preview.length && (
-              <span className="block pl-5 text-xs text-ink-3">+{notes.length - preview.length} more</span>
-            )}
-          </span>
-        </span>
-      )}
-    </button>
-  );
-}
-
-interface GroupPanelProps {
-  group: Group;
-  notes: Note[];
-  isExporting: boolean;
-  onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onExport: () => void;
-}
-
-// Full-screen on phones, slide-over panel from `sm` up
-function GroupPanel({ group, notes, isExporting, onClose, onEdit, onDelete, onExport }: GroupPanelProps) {
-  const titleId = useId();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  useScrollLock(true);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div
-        className="absolute inset-0 animate-fade-in bg-black/40 backdrop-blur-[2px]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="relative flex h-dvh w-full animate-slide-in-right flex-col bg-surface text-ink shadow-2xl sm:max-w-xl sm:border-l sm:border-line"
-      >
-        <header className="shrink-0 border-b border-line pt-[env(safe-area-inset-top)]">
-          <div className="flex h-14 items-center gap-1 px-2 sm:h-16 sm:px-3">
-            <button onClick={onClose} className="icon-btn" aria-label="Close group">
-              <ArrowLeft className="size-5 sm:hidden" />
-              <X className="hidden size-5 sm:block" />
-            </button>
-            <div className="flex-1" />
-            <button
-              onClick={onExport}
-              className="icon-btn"
-              aria-label="Export group to PDF"
-              title="Export to PDF"
-              disabled={isExporting}
-            >
-              {isExporting ? <Loader2 className="size-[18px] animate-spin" /> : <FileDown className="size-[18px]" />}
-            </button>
-            <button onClick={onEdit} className="icon-btn" aria-label="Edit group" title="Edit group">
-              <Pencil className="size-[18px]" />
-            </button>
-            <button
-              onClick={onDelete}
-              className="icon-btn hover:bg-danger/10 hover:text-danger"
-              aria-label="Delete group"
-              title="Delete group"
-            >
-              <Trash2 className="size-[18px]" />
-            </button>
-          </div>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-8">
-          <span className={`grid size-12 place-items-center rounded-2xl ${tintFor(group._id)}`}>
-            <FolderOpen className="size-6" />
-          </span>
-          <h2 id={titleId} className="mt-4 break-words text-2xl font-bold tracking-tight">
-            {group.name}
-          </h2>
-          <p className="mt-1 text-sm text-ink-3">
-            {pluralize(notes.length, "note")} · Created {formatShortDate(group.createdAt)}
-          </p>
-          {group.description && (
-            <p className="mt-4 whitespace-pre-line break-words text-[15px] leading-relaxed text-ink-2">
-              {group.description}
-            </p>
-          )}
-
-          <h3 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-ink-3">Notes</h3>
-          {notes.length > 0 ? (
-            <ul className="space-y-2">
-              {notes.map((note) => {
-                const isOpen = !!expanded[note._id];
-                return (
-                  <li key={note._id} className="card overflow-hidden">
-                    <button
-                      onClick={() => setExpanded((prev) => ({ ...prev, [note._id]: !prev[note._id] }))}
-                      aria-expanded={isOpen}
-                      className="flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-surface-2"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{note.title}</span>
-                        {!isOpen && (
-                          <span className="mt-0.5 line-clamp-1 break-all text-sm text-ink-2">
-                            {note.content.slice(0, 200)}
-                          </span>
-                        )}
-                      </span>
-                      <ChevronDown
-                        className={`mt-0.5 size-4 shrink-0 text-ink-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="border-t border-line px-4 pb-3 pt-3">
-                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-2">
-                          {note.content}
-                        </p>
-                        <Link
-                          href={`/dashboard?note=${note._id}`}
-                          className="btn btn-ghost -ml-2 mt-2 h-8 px-2 text-xs"
-                        >
-                          Open in editor <ArrowUpRight className="size-3.5" />
-                        </Link>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="card px-6 py-10 text-center text-sm text-ink-2">
-              No notes in this group yet.{" "}
-              <button onClick={onEdit} className="font-medium text-accent hover:underline">
-                Add some
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
-    </div>
-  );
-}
-
-interface GroupFormProps {
-  group: Group | null;
-  notes: Note[];
-  onClose: () => void;
-  onSubmit: (input: GroupInput) => Promise<void>;
-}
-
-function GroupForm({ group, notes, onClose, onSubmit }: GroupFormProps) {
-  const formId = useId();
-  const [name, setName] = useState(group?.name ?? "");
-  const [description, setDescription] = useState(group?.description ?? "");
-  // Keeps ids of deleted notes too, so restoring a note puts it back in its group
-  const [selected, setSelected] = useState<string[]>(group?.notes ?? []);
-  const [filter, setFilter] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const filteredNotes = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    return q
-      ? notes.filter((n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-      : notes;
-  }, [notes, filter]);
-
-  const selectedCount = notes.filter((n) => selected.includes(n._id)).length;
-  const canSubmit = name.trim() !== "" && selectedCount > 0 && !isSubmitting;
-
-  const toggleNote = (id: string) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSubmit) return;
-    setIsSubmitting(true);
-    try {
-      await onSubmit({ name: name.trim(), description: description.trim(), notes: selected });
-    } catch (err) {
-      console.error(err);
-      toast.error(group ? "Couldn't update the group" : "Couldn't create the group");
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      title={group ? "Edit group" : "New group"}
-      description="Bundle related notes together: a training plan, a book, a project."
-      size="lg"
-      footer={
-        <>
-          <button onClick={onClose} className="btn btn-secondary" disabled={isSubmitting}>
-            Cancel
-          </button>
-          <button type="submit" form={formId} className="btn btn-primary" disabled={!canSubmit}>
-            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : !group && <Plus className="size-4" />}
-            {group ? "Save changes" : "Create group"}
-          </button>
-        </>
-      }
-    >
-      <form
-        id={formId}
-        onSubmit={handleSubmit}
-        className="grid gap-6 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
-      >
-        <div className="space-y-4">
-          <div>
-            <label htmlFor={`${formId}-name`} className="mb-1.5 block text-sm font-medium">
-              Name
-            </label>
-            <input
-              id={`${formId}-name`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. 75 Hard plan"
-              className="input"
-              autoFocus={!group}
-            />
-          </div>
-          <div>
-            <label htmlFor={`${formId}-description`} className="mb-1.5 block text-sm font-medium">
-              Description <span className="font-normal text-ink-3">(optional)</span>
-            </label>
-            <textarea
-              id={`${formId}-description`}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's this group about?"
-              rows={4}
-              className="input resize-none"
-            />
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-col">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-sm font-medium">Notes</span>
-            <span className={`text-xs ${selectedCount ? "font-medium text-accent" : "text-ink-3"}`}>
-              {selectedCount} selected
-            </span>
-          </div>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
-            <input
-              type="search"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter notes"
-              aria-label="Filter notes"
-              className="input h-10 py-2 pl-9"
-            />
-          </div>
-          <ul className="mt-2 max-h-[40dvh] divide-y divide-line overflow-y-auto rounded-xl border border-line md:max-h-72">
-            {filteredNotes.map((note) => (
-              <li key={note._id}>
-                <label className="flex cursor-pointer items-start gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(note._id)}
-                    onChange={() => toggleNote(note._id)}
-                    className="mt-0.5 size-4 shrink-0 accent-accent"
-                  />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">{note.title}</span>
-                    <span className="block truncate text-xs text-ink-3">{note.content.slice(0, 120)}</span>
-                  </span>
-                </label>
-              </li>
-            ))}
-            {filteredNotes.length === 0 && (
-              <li className="px-4 py-8 text-center text-sm text-ink-3">
-                {notes.length ? "No notes match that filter." : "You don't have any notes yet."}
-              </li>
-            )}
-          </ul>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
-
-function GroupsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="card p-5">
-          <div className="flex items-center gap-3">
-            <div className="skeleton size-11 rounded-xl" />
-            <div className="flex-1 space-y-2">
-              <div className="skeleton h-4 w-1/2" />
-              <div className="skeleton h-3 w-1/3" />
-            </div>
-          </div>
-          <div className="skeleton mt-4 h-3 w-full" />
-          <div className="skeleton mt-2 h-3 w-2/3" />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 const GroupNotes = () => {
-  const router = useRouter();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
-  // `groupId: null` means the form is creating a new group
-  const [form, setForm] = useState<{ groupId: string | null } | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [exportingId, setExportingId] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(false);
-    try {
-      const [notesRes, groupsRes] = await Promise.all([
-        fetch("/api/auth/notes", { credentials: "include" }),
-        fetch("/api/auth/groupnote", { credentials: "include" }),
-      ]);
-      if (notesRes.status === 401 || groupsRes.status === 401) {
-        router.replace("/login");
-        return;
-      }
-      if (!notesRes.ok || !groupsRes.ok) throw new Error("Failed to fetch data");
-
-      const [notesData, groupsData]: [Note[], Group[]] = await Promise.all([notesRes.json(), groupsRes.json()]);
-      setNotes(notesData.filter((n) => !n.is_deleted));
-      setGroups(groupsData.filter((g) => !g.is_deleted));
-    } catch (err) {
-      console.error(err);
-      setLoadError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [router]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const noteById = useMemo(() => new Map(notes.map((n) => [n._id, n] as const)), [notes]);
-  const notesFor = useCallback(
-    (group: Group) =>
-      (group.notes ?? []).map((id) => noteById.get(id)).filter((n): n is Note => n !== undefined),
-    [noteById]
-  );
-
-  const query = searchQuery.trim().toLowerCase();
-  const visibleGroups = query
-    ? groups.filter(
-        (g) => g.name.toLowerCase().includes(query) || (g.description ?? "").toLowerCase().includes(query)
-      )
-    : groups;
-
-  const openGroup = groups.find((g) => g._id === openGroupId) ?? null;
-  const formGroup = form?.groupId ? groups.find((g) => g._id === form.groupId) ?? null : null;
-  const deleteGroup = groups.find((g) => g._id === deleteId) ?? null;
-
-  const handleSubmitGroup = async (input: GroupInput) => {
-    const groupId = form?.groupId;
-    const res = await fetch("/api/auth/groupnote", {
-      method: groupId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(groupId ? { groupId, ...input } : input),
+    const [notes, setNotes] = useState<Note[]>([]);
+    const [groupNotes, setGroupNotes] = useState<GroupNote[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isCreating, setIsCreating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
+    const [isExporting, setIsExporting] = useState<Record<string, boolean>>({});
+    const [newGroupNote, setNewGroupNote] = useState({ name: "", description: "" });
+    const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [expandedContents, setExpandedContents] = useState<Record<string, boolean>>({});
+    const [expandAll, setExpandAll] = useState(false);
+    const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
+    const [editGroupData, setEditGroupData] = useState<EditGroupDataType>({
+        name: "",
+        description: "",
+        notes: []
     });
-    if (!res.ok) throw new Error(`Failed to ${groupId ? "update" : "create"} group`);
-    const data = await res.json();
 
-    if (groupId) {
-      setGroups((prev) => prev.map((g) => (g._id === groupId ? { ...g, ...input } : g)));
-      toast.success("Group updated");
-    } else {
-      setGroups((prev) => [data.groupNote, ...prev]);
-      toast.success("Group created");
-    }
-    setForm(null);
-  };
+    const handleSearchNotes = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        const filtered = notes.filter(note =>
+            note.title.toLowerCase().includes(value.toLowerCase()) ||
+            note.content.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredNotes(filtered);
+    };
 
-  const handleDeleteGroup = async () => {
-    if (!deleteId) return;
-    setIsDeleting(true);
-    try {
-      const res = await fetch("/api/auth/groupnote", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ groupId: deleteId, is_deleted: true }),
-      });
-      if (!res.ok) throw new Error("Failed to delete group");
-      setGroups((prev) => prev.filter((g) => g._id !== deleteId));
-      if (openGroupId === deleteId) setOpenGroupId(null);
-      setDeleteId(null);
-      toast.success("Group deleted");
-    } catch (err) {
-      console.error(err);
-      toast.error("Couldn't delete the group");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const [notesRes, groupNotesRes] = await Promise.all([
+                    fetch("/api/auth/notes", { credentials: "include" }),
+                    fetch("/api/auth/groupnote", { credentials: "include" })
+                ]);
 
-  const handleExport = async (groupId: string) => {
-    setExportingId(groupId);
-    const ok = await fetchAndExportGroupNote(groupId);
-    if (!ok) toast.error("Couldn't export this group");
-    setExportingId(null);
-  };
+                if (!notesRes.ok || !groupNotesRes.ok) {
+                    throw new Error("Failed to fetch data");
+                }
 
-  const openCreate = () => setForm({ groupId: null });
+                const [notesData, groupNotesRes2] = await Promise.all([
+                    notesRes.json(),
+                    groupNotesRes.json()
+                ]);
 
-  let body: React.ReactNode;
-  if (isLoading) {
-    body = <GroupsSkeleton />;
-  } else if (loadError) {
-    body = (
-      <EmptyState
-        icon={<AlertCircle className="size-6" />}
-        title="Couldn't load your groups"
-        description="Check your connection and try again."
-        action={
-          <button onClick={fetchData} className="btn btn-secondary">
-            <RotateCw className="size-4" /> Retry
-          </button>
+                const activeNotes = notesData.filter((n: Note) => !n.is_deleted);
+                setNotes(activeNotes);
+                setFilteredNotes(activeNotes);
+
+                const activeGroupNotes = groupNotesRes2.filter((g: GroupNote) => !g.is_deleted);
+                const enhancedGroupNotes = activeGroupNotes.map((group: GroupNote) => ({
+                    ...group,
+                    noteObjects: activeNotes.filter((note: Note) =>
+                        group.notes && group.notes.includes(note._id)
+                    )
+                }));
+
+                setGroupNotes(enhancedGroupNotes);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleCreateGroupNote = async () => {
+        if (!newGroupNote.name.trim() || !newGroupNote.description.trim() || selectedNotes.length === 0) {
+            return;
         }
-      />
-    );
-  } else if (groups.length === 0) {
-    body = (
-      <EmptyState
-        icon={<FolderPlus className="size-6" />}
-        title="No groups yet"
-        description={
-          notes.length
-            ? "Bundle related notes into a group to keep them together and export them as one PDF."
-            : "Groups collect your notes. Write a note first, then come back to group it."
+
+        try {
+            setIsCreating(true);
+            const res = await fetch("/api/auth/groupnote", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...newGroupNote,
+                    notes: selectedNotes.map(n => n._id)
+                }),
+                credentials: "include",
+            });
+
+            if (!res.ok) throw new Error("Failed to create group note");
+
+            const data = await res.json();
+            const newGroupWithNotes = {
+                ...data.groupNote,
+                noteObjects: selectedNotes
+            };
+
+            setGroupNotes(prev => [newGroupWithNotes, ...prev]);
+            setNewGroupNote({ name: "", description: "" });
+            setSelectedNotes([]);
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsCreating(false);
         }
-        action={
-          notes.length ? (
-            <button onClick={openCreate} className="btn btn-primary">
-              <Plus className="size-4" /> Create a group
+    };
+
+    const handleEditGroupNote = async (groupId: string) => {
+        try {
+            setIsCreating(true);
+            const res = await fetch("/api/auth/groupnote", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    groupId: groupId,
+                    name: editGroupData.name,
+                    description: editGroupData.description,
+                    notes: editGroupData.notes
+                }),
+                credentials: "include",
+            });
+
+            if (!res.ok) throw new Error("Failed to update group note");
+
+            const data = await res.json();
+            setGroupNotes(prev => prev.map(group =>
+                group._id === groupId
+                    ? {
+                        ...group,
+                        name: editGroupData.name,
+                        description: editGroupData.description,
+                        notes: editGroupData.notes,
+                        noteObjects: notes.filter(note => editGroupData.notes.includes(note._id))
+                    }
+                    : group
+            ));
+
+            setIsEditing(null);
+            setEditGroupData({ name: "", description: "", notes: [] });
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const handleExportGroupNote = async (groupId: string) => {
+        try {
+            setIsExporting(prev => ({ ...prev, [groupId]: true }));
+            const success = await fetchAndExportGroupNote(groupId);
+            if (!success) {
+                console.warn("Failed to export group note");
+            }
+        } catch (err) {
+            console.error("Error exporting group note:", err);
+        } finally {
+            setIsExporting(prev => ({ ...prev, [groupId]: false }));
+        }
+    };
+
+    const startEditing = (group: GroupNote) => {
+        setEditGroupData({
+            name: group.name,
+            description: group.description,
+            notes: group.notes || []
+        });
+        setSelectedNotes(group.noteObjects || []);
+        setIsEditing(group._id);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteGroupNote = async (id: string) => {
+        try {
+            setIsDeleting(prev => ({ ...prev, [id]: true }));
+            const res = await fetch("/api/auth/groupnote", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ groupId: id, is_deleted: true }),
+            });
+
+            if (!res.ok) throw new Error("Failed to delete group note");
+            setGroupNotes(groupNotes.filter(group => group._id !== id));
+            setDeleteConfirmationId(null);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsDeleting(prev => ({ ...prev, [id]: false }));
+        }
+    };
+
+    const handleSelectNote = (note: Note) => {
+        setSelectedNotes(prev =>
+            prev.some(n => n._id === note._id)
+                ? prev.filter(n => n._id !== note._id)
+                : [...prev, note]
+        );
+
+        if (isEditing) {
+            setEditGroupData(prev => {
+                const noteId = note._id;
+                const isAlreadySelected = prev.notes.includes(noteId);
+                return {
+                    ...prev,
+                    notes: isAlreadySelected
+                        ? prev.notes.filter(id => id !== noteId)
+                        : [...prev.notes, noteId]
+                };
+            });
+        }
+    };
+
+    const toggleGroupExpansion = (groupId: string) => {
+        setExpandedGroups(prev => ({
+            ...prev,
+            [groupId]: !prev[groupId]
+        }));
+    };
+
+    const toggleContentExpansion = (noteId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setExpandedContents(prev => ({
+            ...prev,
+            [noteId]: !prev[noteId]
+        }));
+    };
+
+    const toggleExpandAll = () => {
+        const newExpandState = !expandAll;
+        setExpandAll(newExpandState);
+        const groupExpansionState: Record<string, boolean> = {};
+        groupNotes.forEach(group => {
+            groupExpansionState[group._id] = newExpandState;
+        });
+        setExpandedGroups(groupExpansionState);
+        if (!newExpandState) {
+            setExpandedContents({});
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+            <header className="sticky top-0 z-10 backdrop-blur-sm bg-white/80 border-b border-slate-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4">
+                        <div className="flex items-center space-x-4">
+                            <Link href="/dashboard" className="flex items-center text-slate-700 hover:text-slate-900 transition-colors">
+                                <ArrowLeft size={20} className="mr-2" />
+                                <span className="text-sm font-medium">Back to Dashboard</span>
+                            </Link>
+                            <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                            <h1 className="text-xl font-bold text-slate-800 hidden sm:block">My Notebook Collections</h1>
+                        </div>
+                        {groupNotes.length > 0 && (
+                            <button
+                                onClick={toggleExpandAll}
+                                className="flex items-center text-sm font-medium rounded-full px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all"
+                            >
+                                {expandAll ? (
+                                    <>
+                                        <EyeOff size={16} className="mr-2" />
+                                        <span>Collapse All</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Eye size={16} className="mr-2" />
+                                        <span>Expand All</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-grow px-4 py-8 sm:px-6 max-w-7xl mx-auto w-full">
+                {groupNotes.length > 0 ? (
+                    <div className="grid gap-6">
+                        {groupNotes.map(groupNote => (
+                            <div key={groupNote._id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-300">
+                                <div className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <div className="flex-grow mr-2" onClick={() => toggleGroupExpansion(groupNote._id)}>
+                                        <h3 className="font-semibold text-slate-800 text-lg">{groupNote.name}</h3>
+                                        <p className="text-sm text-slate-500 mt-1 line-clamp-2">{groupNote.description}</p>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        {deleteConfirmationId === groupNote._id ? (
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteConfirmationId(null);
+                                                    }}
+                                                    className="text-slate-500 hover:text-slate-700 text-xs mr-2 px-3 py-1.5 rounded-md border border-slate-200 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteGroupNote(groupNote._id);
+                                                    }}
+                                                    className="bg-red-50 text-red-600 hover:bg-red-100 text-xs px-3 py-1.5 rounded-md border border-red-200 flex items-center transition-colors"
+                                                    disabled={isDeleting[groupNote._id]}
+                                                >
+                                                    {isDeleting[groupNote._id] ? (
+                                                        <Loader2 size={12} className="animate-spin mr-1.5" />
+                                                    ) : (
+                                                        <Trash2 size={12} className="mr-1.5" />
+                                                    )}
+                                                    Confirm
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleExportGroupNote(groupNote._id);
+                                                    }}
+                                                    className="text-slate-400 hover:text-green-500 focus:outline-none p-1.5 rounded-full hover:bg-green-50 transition-colors"
+                                                    aria-label="Export to PDF"
+                                                    disabled={isExporting[groupNote._id]}
+                                                >
+                                                    {isExporting[groupNote._id] ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <FileDown size={16} />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startEditing(groupNote);
+                                                    }}
+                                                    className="text-slate-400 hover:text-blue-500 focus:outline-none p-1.5 rounded-full hover:bg-blue-50 transition-colors"
+                                                    aria-label="Edit group"
+                                                >
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteConfirmationId(groupNote._id);
+                                                    }}
+                                                    className="text-slate-400 hover:text-red-500 focus:outline-none p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                                    aria-label="Delete group"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                                <div className="h-8 w-px bg-slate-200 mx-1"></div>
+                                            </>
+                                        )}
+                                        <span className="text-xs font-medium bg-slate-100 text-slate-600 rounded-full px-2.5 py-1">
+                                            {groupNote.noteObjects.length} Note{groupNote.noteObjects.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleGroupExpansion(groupNote._id);
+                                            }}
+                                            className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500"
+                                        >
+                                            <ChevronRight
+                                                size={18}
+                                                className={`transition-transform duration-300 ${expandedGroups[groupNote._id] ? 'rotate-90' : ''}`}
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+                                {expandedGroups[groupNote._id] && (
+                                    <div className="bg-slate-50 p-5 border-t border-slate-100">
+                                        {groupNote.noteObjects && groupNote.noteObjects.length > 0 ? (
+                                            <div className="grid gap-4">
+                                                {groupNote.noteObjects.map((note) => (
+                                                    <div key={note._id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200 transition-all hover:border-slate-300">
+                                                        <div className="p-4 flex justify-between items-center">
+                                                            <h4 className="font-medium text-slate-800">{note.title}</h4>
+                                                            <button
+                                                                onClick={(e) => toggleContentExpansion(note._id, e)}
+                                                                className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                                                            >
+                                                                {expandedContents[note._id] ? "Hide Content" : "Show Content"}
+                                                            </button>
+                                                        </div>
+                                                        <div className="px-4 pb-4 pt-0">
+                                                            <div className="text-sm text-slate-600">
+                                                                {expandedContents[note._id] ? (
+                                                                    <div className="whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-200 mt-1">
+                                                                        {note.content}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="line-clamp-2 italic text-slate-500">
+                                                                        {note.content.substring(0, 100)}
+                                                                        {note.content.length > 100 ? "..." : ""}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8">
+                                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                                                    <FileText size={20} />
+                                                </div>
+                                                <p className="text-slate-500 font-medium">No notes in this group yet</p>
+                                                <p className="text-xs text-slate-400 mt-1">Notes added to this group will appear here</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto mt-12">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 text-slate-400 mb-4">
+                            <FolderPlus size={24} />
+                        </div>
+                        <h3 className="text-xl font-semibold text-slate-800 mb-2">No notebook groups yet</h3>
+                        <p className="text-slate-500 mb-6">Create your first group to organize your notes and easily access related content.</p>
+                        <button
+                            onClick={() => {
+                                setIsEditing(null);
+                                setNewGroupNote({ name: "", description: "" });
+                                setSelectedNotes([]);
+                                setIsModalOpen(true);
+                            }}
+                            className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 inline-flex items-center"
+                        >
+                            <Plus size={18} className="mr-1.5" />
+                            Create Your First Group
+                        </button>
+                    </div>
+                )}
+            </main>
+
+            <button
+                onClick={() => {
+                    setIsEditing(null);
+                    setNewGroupNote({ name: "", description: "" });
+                    setSelectedNotes([]);
+                    setIsModalOpen(true);
+                }}
+                className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 z-20 flex items-center justify-center hover:scale-110"
+                aria-label="Create new group note"
+            >
+                <Plus size={24} />
             </button>
-          ) : (
-            <Link href="/dashboard?new=1" className="btn btn-primary">
-              <PenLine className="size-4" /> Write a note
-            </Link>
-          )
-        }
-      />
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                            <h3 className="text-xl font-semibold text-slate-800">
+                                {isEditing ? "Edit Notebook Group" : "Create New Notebook Group"}
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setIsModalOpen(false);
+                                    setNewGroupNote({ name: "", description: "" });
+                                    setSelectedNotes([]);
+                                    setIsDropdownOpen(false);
+                                    setIsEditing(null);
+                                }}
+                                className="text-slate-500 hover:text-slate-700 focus:outline-none p-1.5 rounded-full hover:bg-slate-200 transition-colors"
+                                aria-label="Close modal"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-grow overflow-y-auto">
+                            <div className="md:flex flex-col md:flex-row">
+                                <div className="md:w-1/2 p-6 md:border-r border-slate-200">
+                                    <h4 className="text-lg font-medium text-slate-800 mb-4">Group Details</h4>
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label htmlFor="group-name" className="block text-sm font-medium text-slate-700 mb-1.5">Group Name</label>
+                                            <input
+                                                id="group-name"
+                                                type="text"
+                                                placeholder="Enter a descriptive name"
+                                                value={isEditing ? editGroupData.name : newGroupNote.name}
+                                                onChange={e => isEditing
+                                                    ? setEditGroupData(prev => ({ ...prev, name: e.target.value }))
+                                                    : setNewGroupNote(prev => ({ ...prev, name: e.target.value }))}
+                                                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 placeholder:text-slate-400"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="group-description" className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                                            <textarea
+                                                id="group-description"
+                                                placeholder="What's this group about?"
+                                                value={isEditing ? editGroupData.description : newGroupNote.description}
+                                                onChange={e => isEditing
+                                                    ? setEditGroupData(prev => ({ ...prev, description: e.target.value }))
+                                                    : setNewGroupNote(prev => ({ ...prev, description: e.target.value }))}
+                                                rows={5}
+                                                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 placeholder:text-slate-400"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:w-1/2 p-6">
+                                    <h4 className="text-lg font-medium text-slate-800 mb-4">Select Notes</h4>
+                                    <div className="relative mb-4">
+                                        <button
+                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                            className="w-full flex items-center justify-between bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                        >
+                                            <div className="flex items-center">
+                                                <FileText size={16} className="text-slate-400 mr-2" />
+                                                <span className="text-sm text-slate-700">
+                                                    {selectedNotes.length > 0
+                                                        ? `${selectedNotes.length} note${selectedNotes.length > 1 ? 's' : ''} selected`
+                                                        : 'Choose notes to include in this group'}
+                                                </span>
+                                            </div>
+                                            <ChevronDown size={16} className={`text-slate-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        {isDropdownOpen && (
+                                            <div className="absolute z-20 mt-1 w-full bg-white border border-sl
+ate-200 rounded-lg shadow-xl max-h-56 overflow-hidden flex flex-col">
+                                                <div className="sticky top-0 bg-white border-b border-slate-100 p-3 z-10">
+                                                    <div className="relative">
+                                                        <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Search notes..."
+                                                            value={searchTerm}
+                                                            onChange={handleSearchNotes}
+                                                            className="w-full border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="overflow-y-auto flex-grow">
+                                                    {filteredNotes.length > 0 ? (
+                                                        <div className="py-2">
+                                                            {filteredNotes.map(note => (
+                                                                <div
+                                                                    key={note._id}
+                                                                    className={`flex items-center p-3 mx-2 my-1 rounded-lg cursor-pointer transition-colors ${selectedNotes.some(n => n._id === note._id)
+                                                                        ? 'bg-blue-50 border border-blue-200'
+                                                                        : 'hover:bg-slate-50 border border-transparent'
+                                                                        }`}
+                                                                    onClick={() => handleSelectNote(note)}
+                                                                >
+                                                                    <div className={`w-5 h-5 rounded-md mr-3 flex items-center justify-center ${selectedNotes.some(n => n._id === note._id)
+                                                                        ? 'bg-blue-500'
+                                                                        : 'border border-slate-300'
+                                                                        }`}>
+                                                                        {selectedNotes.some(n => n._id === note._id) && (
+                                                                            <Check size={12} className="text-white" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-grow">
+                                                                        <div className="font-medium text-slate-800">{note.title.substring(0, 10)}{note.title.length > 10 ? "..." : ""}</div>
+                                                                        <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">{note.content.substring(0, 20)}{note.content.length > 20 ? "..." : ""}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="py-8 text-center">
+                                                            <FileX size={24} className="mx-auto text-slate-300 mb-2" />
+                                                            <div className="text-slate-500">No notes available</div>
+                                                            <div className="text-xs text-slate-400 mt-1">Create notes first to add them to groups</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 h-64 flex flex-col">
+                                        <div className="text-sm font-medium text-slate-700 mb-3 flex items-center justify-between">
+                                            <span>Selected Notes</span>
+                                            {selectedNotes.length > 0 && (
+                                                <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
+                                                    {selectedNotes.length}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="overflow-y-auto flex-grow">
+                                            {selectedNotes.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedNotes.map(note => (
+                                                        <div
+                                                            key={note._id}
+                                                            className="bg-white text-slate-700 text-sm rounded-lg px-3 py-2 flex items-center border border-slate-200 hover:border-slate-300 transition-colors"
+                                                        >
+                                                            <span className="line-clamp-1 max-w-xs">{note.title.substring(0, 10)}{note.title.length > 10 ? "..." : ""}</span>
+                                                            <button
+                                                                onClick={() => handleSelectNote(note)}
+                                                                className="ml-2 text-slate-400 hover:text-red-500 focus:outline-none"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8">
+                                                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-200 text-slate-400 mb-2">
+                                                        <FilePlus size={16} />
+                                                    </div>
+                                                    <p className="text-slate-500 text-sm">No notes selected yet</p>
+                                                    <p className="text-xs text-slate-400 mt-1">Select notes from the dropdown above</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:justify-end gap-3 bg-slate-50">
+                            <button
+                                onClick={() => {
+                                    setIsModalOpen(false);
+                                    setNewGroupNote({ name: "", description: "" });
+                                    setSelectedNotes([]);
+                                    setIsEditing(null);
+                                }}
+                                className="w-full sm:w-auto px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={isEditing
+                                    ? () => handleEditGroupNote(isEditing)
+                                    : handleCreateGroupNote}
+                                className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                disabled={isCreating ||
+                                    (isEditing
+                                        ? !editGroupData.name.trim() || !editGroupData.description.trim() || selectedNotes.length === 0
+                                        : !newGroupNote.name.trim() || !newGroupNote.description.trim() || selectedNotes.length === 0)}
+                            >
+                                {isCreating ? <Loader2 className="animate-spin" size={16} /> : (isEditing ? null : <Plus size={16} />)}
+                                {isEditing ? "Save Changes" : "Create Notebook Group"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
-  } else if (visibleGroups.length === 0) {
-    body = (
-      <EmptyState
-        icon={<Search className="size-6" />}
-        title="No matches"
-        description={<>No group matches &ldquo;{searchQuery.trim()}&rdquo;.</>}
-        action={
-          <button onClick={() => setSearchQuery("")} className="btn btn-secondary">
-            Clear search
-          </button>
-        }
-      />
-    );
-  } else {
-    body = (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-        {visibleGroups.map((group) => (
-          <GroupCard
-            key={group._id}
-            group={group}
-            notes={notesFor(group)}
-            onOpen={() => setOpenGroupId(group._id)}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <AppShell
-      active="groups"
-      title="Groups"
-      subtitle={isLoading ? "Loading…" : pluralize(groups.length, "group")}
-      onCreate={openCreate}
-      createLabel="New group"
-    >
-      {groups.length > 0 && (
-        <SearchField
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search groups"
-          className="mb-4 sm:mb-6 sm:max-w-md"
-        />
-      )}
-
-      {body}
-
-      {openGroup && (
-        <GroupPanel
-          group={openGroup}
-          notes={notesFor(openGroup)}
-          isExporting={exportingId === openGroup._id}
-          onClose={() => setOpenGroupId(null)}
-          onEdit={() => setForm({ groupId: openGroup._id })}
-          onDelete={() => setDeleteId(openGroup._id)}
-          onExport={() => handleExport(openGroup._id)}
-        />
-      )}
-
-      {form && (
-        <GroupForm
-          key={form.groupId ?? "new"}
-          group={formGroup}
-          notes={notes}
-          onClose={() => setForm(null)}
-          onSubmit={handleSubmitGroup}
-        />
-      )}
-
-      <ConfirmDialog
-        open={deleteGroup !== null}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDeleteGroup}
-        title={`Delete “${deleteGroup?.name ?? "group"}”?`}
-        description="Only the group is removed. The notes inside stay safe in your notebook."
-        confirmLabel="Delete group"
-        tone="danger"
-        busy={isDeleting}
-      />
-    </AppShell>
-  );
 };
 
 export default GroupNotes;
