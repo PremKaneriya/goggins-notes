@@ -51,8 +51,10 @@ export async function PATCH(req: Request) {
             return new Response(JSON.stringify({ error: "Note ID is required" }), { status: 400 });
         }
 
-        await Note.updateOne({ _id: noteId }, { is_deleted: true });
-        return new Response(JSON.stringify({ message: "Note deleted successfully" }));
+        // `is_deleted: false` restores a note from Recently Deleted; anything else deletes it
+        const deleted = is_deleted !== false;
+        await Note.updateOne({ _id: noteId }, { is_deleted: deleted });
+        return new Response(JSON.stringify({ message: deleted ? "Note deleted successfully" : "Note restored successfully" }));
 
 
         return new Response(JSON.stringify({ success: true }), { status: 200 });
